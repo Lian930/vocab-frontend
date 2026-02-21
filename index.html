@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vocab Master v7.1 (Cloud Sync Edition)</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;       
+            --card-bg: #1e293b;        
+            --input-bg: #334155;       
+            --text-main: #f8fafc;      
+            --text-sub: #94a3b8;       
+            --border-color: #475569;   
+            --primary: #3b82f6;        
+            --primary-hover: #2563eb;
+            --success: #10b981;        
+            --danger: #ef4444;         
+            --warning: #f59e0b;
+            --practice: #10b981; 
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -1px rgb(0 0 0 / 0.06);
+        }
+
+        body { 
+            font-family: 'Segoe UI', 'Roboto', Helvetica, Arial, sans-serif; 
+            background: var(--bg-color); 
+            color: var(--text-main);
+            max-width: 900px; margin: 0 auto; padding: 20px; line-height: 1.6;
+        }
+
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center;
+            padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 14px;
+            cursor: pointer; transition: all 0.2s; border: none; gap: 6px;
+        }
+        .btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-secondary { background: var(--input-bg); color: var(--text-main); border: 1px solid var(--border-color); }
+        .btn-danger { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid var(--danger); }
+        .btn-danger:hover { background: var(--danger); color: white; }
+        .btn-icon { padding: 6px; border-radius: 50%; width: 32px; height: 32px;}
+
+        input, select, textarea { 
+            width: 100%; padding: 10px 12px; background: var(--input-bg); 
+            border: 1px solid var(--border-color); color: white; 
+            border-radius: 6px; box-sizing: border-box; font-size: 14px; 
+            font-family: inherit; transition: border-color 0.2s;
+        }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); }
+
+        .container { 
+            background: var(--card-bg); padding: 24px; border-radius: 12px; 
+            box-shadow: var(--shadow-md); margin-bottom: 24px; border: 1px solid var(--border-color);
+        }
+
+        .section-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid var(--primary);
+        }
+        .toggle-btn { font-size: 12px; color: var(--text-sub); cursor: pointer; user-select: none; }
+        .toggle-btn:hover { color: var(--primary); }
+
+        .def-group { 
+            background: rgba(0,0,0,0.15); 
+            padding: 16px; border-radius: 8px; margin-bottom: 12px; 
+            border-left: 3px solid var(--text-sub);
+        }
+
+        .word-card { 
+            background: #252f40; border: 1px solid var(--border-color); 
+            padding: 0; border-radius: 8px; margin-bottom: 20px; 
+            overflow: hidden; transition: transform 0.2s, box-shadow 0.2s; position: relative;
+        }
+        .word-card:hover { transform: translateY(-3px); box-shadow: 0 10px 20px -3px rgb(0 0 0 / 0.2); }
+        .review-highlight { border: 2px solid var(--warning) !important; box-shadow: 0 0 15px rgba(245, 158, 11, 0.2); }
+        
+        .timer-badge {
+            font-size: 11px; font-weight: bold; padding: 2px 8px; border-radius: 12px;
+            background: rgba(255,255,255,0.1); color: var(--text-sub); margin-left: auto;
+        }
+        .timer-due { background: var(--warning); color: black; animation: pulse 2s infinite;}
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+
+        .card-header { 
+            background: rgba(0,0,0,0.2); padding: 12px 20px; 
+            display: flex; align-items: center; gap: 10px; border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .word-title { font-size: 1.5em; font-weight: 700; color: white; letter-spacing: 0.5px; }
+        .word-ipa { color: var(--text-sub); font-family: 'Arial Unicode MS', sans-serif; font-size: 0.9em; background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px;}
+        .card-body { padding: 16px 20px; padding-bottom: 24px; }
+        
+        .level-bar-container { position: absolute; bottom: 0; left: 0; width: 100%; height: 6px; background: #0f172a; }
+        .level-bar-fill { height: 100%; transition: width 0.3s, background-color 0.3s; }
+        .level-badge { font-size: 11px; font-weight: bold; padding: 2px 6px; border-radius: 4px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); }
+
+        .def-row { margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px dashed rgba(255,255,255,0.1); display: grid; grid-template-columns: 40px 1fr; gap: 12px; }
+        .def-row:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .pos-tag { font-size: 12px; font-weight: 800; text-transform: uppercase; color: var(--text-sub); text-align: right; margin-top: 4px;}
+        .pos-n { color: #60a5fa; } .pos-v { color: #f472b6; } .pos-adj { color: #34d399; } .pos-adv { color: #fbbf24; }
+        .meaning-text { font-size: 1.1em; color: var(--text-main); font-weight: 500; }
+        .sentence-text { margin-top: 4px; font-size: 0.9em; color: #94a3b8; font-style: italic; border-left: 2px solid #475569; padding-left: 8px; }
+
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(4px); }
+        .modal-content { background: var(--card-bg); width: 90%; max-width: 650px; max-height: 90vh; overflow-y: auto; padding: 0; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1); }
+        .modal-header { padding: 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;}
+        .modal-body { padding: 20px; }
+        .modal-footer { padding: 20px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 10px; background: rgba(0,0,0,0.1); }
+
+        #notification-area { background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.4); color: #fcd34d; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: none; animation: fadeIn 0.5s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .big-speaker-btn { background: var(--primary); color: white; border: none; border-radius: 50%; width: 80px; height: 80px; font-size: 36px; cursor: pointer; display: flex; align-items: center; justify-content: center; margin: 20px auto; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.5); transition: transform 0.1s; }
+        .big-speaker-btn:active { transform: scale(0.9); }
+    </style>
+</head>
+<body>
+
+    <div id="notification-area"></div>
+
+    <div class="container">
+        <div class="section-header" style="margin-bottom:0; border-bottom:none;">
+            <h2 style="margin:0; border:none; padding:0;">📚 新增單字</h2>
+            <span class="toggle-btn" onclick="toggleSection('add-section')">▼ 展開/收合</span>
+        </div>
+        
+        <div id="add-section" style="display:none; margin-top:20px; border-top: 2px solid var(--primary); padding-top:20px;">
+            <div style="display:grid; grid-template-columns: 2fr 1fr; gap:10px; margin-bottom:15px;">
+                
+                <div>
+                    <label style="font-size:12px; color:var(--primary); font-weight:bold;">英文單字 *</label>
+                    <div style="display:flex; gap:10px;">
+                        <input type="text" id="input-word" placeholder="例: algorithm" style="font-size:1.2em; font-weight:bold;">
+                        <button id="ai-fetch-btn" onclick="fetchWordData()" class="btn btn-primary" style="white-space:nowrap;">✨ AI 抓取</button>
+                    </div>
+                </div>
+                <div><label style="font-size:12px; color:var(--text-sub);">音標 (選填)</label><input type="text" id="input-ipa" placeholder="例: [rɪˈmoʊt]"></div>
+            </div>
+            <div id="definitions-container"></div>
+            <button onclick="addDefinitionInput('definitions-container')" class="btn btn-secondary" style="width:100%; border-style:dashed; margin-top:10px;">+ 新增定義</button>
+            <div style="margin-top:20px; display:flex; justify-content:flex-end;">
+                <button type="button" onclick="clearAddForm()" class="btn btn-secondary" style="padding:10px 20px;">🧹 清空欄位</button>
+                <button id="save-new-btn" onclick="saveNewCard()" class="btn btn-primary" style="padding:10px 30px;">儲存單字卡</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container" style="background:transparent; border:none; box-shadow:none; padding:0;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <h2 style="margin:0; border:none; color:var(--text-main);">🗂️ 雲端字庫 (<span id="total-count" style="color:var(--primary);">0</span>)</h2>
+            <div style="display:flex; gap:10px;">
+                <button onclick="startQuiz('practice')" class="btn btn-success" style="font-size:13px;" title="不影響複習進度，純練手感">🎲 隨機刷題</button>
+            </div>
+        </div>
+        <div id="card-list"></div>
+    </div>
+
+    <div id="edit-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header"><h3 style="margin:0;">✎ 編輯單字</h3><span onclick="closeEditModal()" style="cursor:pointer; font-size:20px;">&times;</span></div>
+            <div class="modal-body">
+                <input type="hidden" id="edit-id">
+                <div style="display:grid; grid-template-columns: 2fr 1fr; gap:10px; margin-bottom:15px;">
+                    <div><label style="font-size:12px; color:var(--primary);">英文單字</label><input type="text" id="edit-word"></div>
+                    <div><label style="font-size:12px; color:var(--text-sub);">音標</label><input type="text" id="edit-ipa"></div>
+                </div>
+                <label style="font-size:12px; color:var(--text-sub);">定義列表</label>
+                <div id="edit-defs-container"></div>
+                <button onclick="addDefinitionInput('edit-defs-container')" class="btn btn-secondary" style="width:100%; border-style:dashed; margin-top:10px;">+ 新增定義</button>
+            </div>
+            <div class="modal-footer">
+                <button onclick="deleteCardFromEdit()" class="btn btn-danger" style="margin-right:auto;">刪除此字</button>
+                <button onclick="closeEditModal()" class="btn btn-secondary">取消</button>
+                <button id="save-edit-btn" onclick="saveEditCard()" class="btn btn-primary">儲存修改</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="quiz-modal" class="modal-overlay">
+        <div class="modal-content" style="max-width:500px; text-align: center;">
+            <div class="modal-header" style="justify-content:center; border:none; padding-bottom:0; position:relative;">
+                <h3 id="quiz-title" style="color:var(--primary); margin:0;">測驗中</h3>
+                <span id="quiz-mode-badge" style="position:absolute; right:20px; font-size:10px; background:#475569; padding:2px 6px; border-radius:4px;"></span>
+            </div>
+            <div class="modal-body" id="quiz-body"></div>
+            <div id="quiz-feedback" style="min-height:30px; margin:10px; font-weight:bold;"></div>
+            <div class="modal-footer" style="justify-content:center; border:none; padding-top:0;">
+                <button onclick="closeQuiz()" class="btn btn-secondary" style="width:100%;">結束測驗</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+    // --- API 基本設定 (雲端版) ---
+    const API_BASE_URL = 'https://vocab-backend-api.onrender.com/api/words';
+    
+    let cards = []; 
+    let reviewList = []; 
+    let quizQueue = [];
+    let currentQ = null;
+    let currentMode = ''; 
+
+    // --- 初始化 ---
+    window.onload = async function() {
+        addDefinitionInput('definitions-container');
+        await loadWordsFromAPI(); 
+        setInterval(checkReview, 60000); 
+    };
+
+    function updateCount() { document.getElementById('total-count').innerText = cards.length; }
+    function toggleSection(id) { const el = document.getElementById(id); el.style.display = (el.style.display === 'none') ? 'block' : 'none'; }
+    function speak(text) { const u = new SpeechSynthesisUtterance(text); u.lang = 'en-US'; window.speechSynthesis.speak(u); }
+
+    // --- 雲端資料操作 (CRUD) ---
+    // --- 升級版：SWR 雙重載入機制 (LocalStorage + 雲端同步) ---
+    async function loadWordsFromAPI() {
+        const loadingIndicator = document.getElementById('loading-indicator'); // 如果你有載入動畫的話
+        if (loadingIndicator) loadingIndicator.style.display = 'block';
+
+        // 🌟 步驟一：先從瀏覽器 LocalStorage 挖出歷史備份
+        const cachedData = localStorage.getItem('vocab_cache_data');
+        if (cachedData) {
+            try {
+                // 如果有備份，0.1 秒瞬間畫出畫面！
+                cards = JSON.parse(cachedData);
+                renderCards(); // 呼叫你原本畫出單字列表的函式
+                updateCount(); // 呼叫你原本更新統計數字的函式
+                console.log("⚡ 瞬間載入本機快取！");
+            } catch (e) {
+                console.error("快取解析失敗，忽略快取", e);
+            }
+        }
+
+        // ☁️ 步驟二：背景默默向 Render 雲端伺服器請求最新資料
+        try {
+            const response = await fetch(API_BASE_URL);
+            if (response.ok) {
+                const freshCards = await response.json();
+                
+                // 將雲端資料轉為字串，用來比對
+                const freshDataString = JSON.stringify(freshCards);
+                
+                // 🌟 步驟三：如果雲端資料跟本地快取「不一樣」，才重新渲染畫面並更新快取
+                if (freshDataString !== cachedData) {
+                    cards = freshCards;
+                    renderCards();
+                    updateCount();
+                    
+                    // 把最新鮮的資料存回 LocalStorage，當作明天的備份
+                    localStorage.setItem('vocab_cache_data', freshDataString);
+                    console.log("☁️ 雲端資料同步完成，畫面與快取已更新！");
+                } else {
+                    console.log("✅ 雲端資料與快取一致，無需重新渲染。");
+                }
+            } else {
+                console.error("讀取雲端資料失敗，狀態碼：", response.status);
+            }
+        } catch (error) {
+            // 如果斷網或是伺服器大當機，至少畫面上還有 LocalStorage 的單字可以看！
+            console.error("無法連線到雲端伺服器，繼續使用離線快取", error);
+        } finally {
+            if (loadingIndicator) loadingIndicator.style.display = 'none';
+        }
+    }
+
+// --- 新增：呼叫後端 AI 抓取單字資料 ---
+    async function fetchWordData() {
+        const wordInput = document.getElementById('input-word').value.trim();
+        if (!wordInput) {
+            alert("請先輸入要查詢的英文單字喔！");
+            return;
+        }
+
+        const fetchBtn = document.getElementById('ai-fetch-btn');
+        fetchBtn.disabled = true;
+        fetchBtn.innerText = "⏳ 呼叫 AI...";
+
+        try {
+            // 打給本機的 FastAPI 路由去問 AI
+            const response = await fetch(`https://vocab-backend-api.onrender.com/api/fetch_word/${wordInput}`);
+            
+            if (response.ok) {
+                const data = await response.json();
+                
+                // 1. 自動填入音標 (如果有的話)
+                document.getElementById('input-ipa').value = data.ipa || '';
+                
+                // 2. 清空原本的定義格子，並根據 AI 的結果自動生出新的格子
+                const container = document.getElementById('definitions-container');
+                container.innerHTML = ''; 
+                
+                if (data.definitions && data.definitions.length > 0) {
+                    data.definitions.forEach(def => {
+                        addDefinitionInput('definitions-container', def);
+                    });
+                } else {
+                    addDefinitionInput('definitions-container'); 
+                }
+                
+            } else {
+                alert("抓取失敗，請檢查 API 金鑰或伺服器狀態。");
+            }
+        } catch (error) {
+            console.error("AI 連線錯誤:", error);
+            alert("無法連線到伺服器抓取資料。");
+        } finally {
+            // 無論成功失敗，都要把按鈕恢復原狀
+            fetchBtn.disabled = false;
+            fetchBtn.innerText = "✨ AI 抓取";
+        }
+    }
+
+    async function saveNewCard() {
+        const word = document.getElementById('input-word').value.trim();
+        const ipa = document.getElementById('input-ipa').value.trim();
+        const defGroups = document.querySelectorAll('#definitions-container .def-group');
+        let definitions = [];
+        
+        defGroups.forEach(group => {
+            const expEl = group.querySelector('.input-explanation'); // 抓取詳細解釋
+            
+            definitions.push({
+                pos: group.querySelector('.input-pos').value,
+                meaning: group.querySelector('.input-meaning').value.trim(),
+                explanation: expEl ? expEl.value.trim() : "", // 存入資料
+                sentence: group.querySelector('.input-sentence').value.trim()
+            });
+        });
+        
+        definitions = definitions.filter(d => d.meaning);
+        
+        if (!word || definitions.length === 0) { alert('請輸入單字與至少一個解釋！'); return; }
+        
+        const cardData = {
+            word: word,
+            ipa: ipa,
+            definitions: definitions,
+            dateAdded: new Date().toISOString().split('T')[0],
+            level: 0,
+            nextReview: Date.now()
+        };
+
+        const saveBtn = document.getElementById('save-new-btn');
+        saveBtn.disabled = true; saveBtn.innerText = "儲存中...";
+
+        try {
+            const response = await fetch(API_BASE_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(cardData)
+            });
+
+            if (response.ok) {
+                // 儲存成功後，自動打掃畫面！
+                if (typeof clearAddForm === "function") {
+                    clearAddForm();
+                }
+                await loadWordsFromAPI(); 
+            } else {
+                const err = await response.json();
+                alert(`儲存失敗：${err.detail}`); 
+            }
+        } catch (error) {
+            console.error(error); alert("無法連線到伺服器！");
+        } finally {
+            saveBtn.disabled = false; saveBtn.innerText = "儲存單字卡";
+        }
+    }
+
+    async function saveEditCard() {
+        const id = document.getElementById('edit-id').value;
+        const word = document.getElementById('edit-word').value.trim();
+        const ipa = document.getElementById('edit-ipa').value.trim();
+        const defGroups = document.querySelectorAll('#edit-defs-container .def-group');
+        let definitions = [];
+        // ✨ 新增的：把 explanation 一起打包存檔
+        defGroups.forEach(group => {
+            const m = group.querySelector('.input-meaning').value.trim();
+            const expEl = group.querySelector('.input-explanation'); // 抓取詳細解釋
+            
+            if(m) { 
+                definitions.push({ 
+                    pos: group.querySelector('.input-pos').value, 
+                    meaning: m, 
+                    explanation: expEl ? expEl.value.trim() : "", // 存進物件裡
+                    sentence: group.querySelector('.input-sentence').value.trim() 
+                }); 
+            }
+        });
+        
+        if (!word || definitions.length === 0) { alert('資料不完整'); return; }
+
+        const originalCard = cards.find(c => String(c.id) === String(id));
+        if(!originalCard) { alert('找不到原始卡片資料'); return; }
+        
+        const updateData = {
+            id: id, word: word, ipa: ipa, definitions: definitions,
+            dateAdded: originalCard.dateAdded, level: originalCard.level, nextReview: originalCard.nextReview
+        };
+
+        const saveBtn = document.getElementById('save-edit-btn');
+        saveBtn.disabled = true; saveBtn.innerText = "修改中...";
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updateData)
+            });
+
+            if (response.ok) {
+                closeEditModal();
+                await loadWordsFromAPI(); 
+            } else {
+                alert("修改失敗，請檢查伺服器");
+            }
+        } catch (error) {
+            console.error(error); alert("連線錯誤");
+        } finally {
+            saveBtn.disabled = false; saveBtn.innerText = "儲存修改";
+        }
+    }
+
+    async function deleteCardFromEdit() {
+        const id = document.getElementById('edit-id').value;
+        if(confirm('確定要把這張單字卡徹底刪除嗎？此動作無法復原喔！')) { 
+            try {
+                const response = await fetch(`${API_BASE_URL}/${id}`, { method: 'DELETE' });
+                if (response.ok) {
+                    closeEditModal();
+                    await loadWordsFromAPI(); 
+                } else {
+                    alert("刪除失敗");
+                }
+            } catch (error) {
+                console.error(error); alert("連線錯誤");
+            }
+        }
+    }
+
+    function addDefinitionInput(containerId, data = null) {
+        const container = document.getElementById(containerId);
+        const div = document.createElement('div');
+        div.className = 'def-group';
+        
+        // 抓取資料，如果沒有就給空字串
+        const pos = data ? data.pos : 'n.';
+        const meaning = data ? data.meaning : '';
+        const explanation = data && data.explanation ? data.explanation : ''; 
+        const sentence = data ? data.sentence : '';
+        
+        div.innerHTML = `
+            <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                <span style="font-size:12px; color:var(--text-sub);">定義設定</span>
+                <span onclick="this.parentElement.parentElement.remove()" style="cursor:pointer; color:var(--danger); font-size:12px;">✕ 移除</span>
+            </div>
+            
+            <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:8px;">
+                <div style="display:flex; gap:10px;">
+                    <select class="input-pos" style="flex:1;">
+                        <option value="n." ${pos==='n.'?'selected':''}>n. 名詞</option>
+                        <option value="v." ${pos==='v.'?'selected':''}>v. 動詞</option>
+                        <option value="adj." ${pos==='adj.'?'selected':''}>adj. 形容詞</option>
+                        <option value="adv." ${pos==='adv.'?'selected':''}>adv. 副詞</option>
+                        <option value="prep." ${pos==='prep.'?'selected':''}>prep. 介系詞</option>
+                        <option value="phr." ${pos==='phr.'?'selected':''}>phr. 片語</option>
+                        <option value="other" ${pos==='other'?'selected':''}>其他</option>
+                    </select>
+                    <input type="text" class="input-meaning" placeholder="中文翻譯 (例: 演算法)" value="${meaning}" style="flex:3;">
+                </div>
+                <textarea class="input-explanation" rows="2" placeholder="詳細解釋與適當場合 (選填)">${explanation}</textarea>
+            </div>
+            
+            <textarea class="input-sentence" rows="2" placeholder="例句 (選填)">${sentence}</textarea>
+        `;
+        container.appendChild(div);
+    }
+
+    function openEditModal(id) {
+        // 使用 String(c.id) 確保即使 Python 回傳的 id 型態不同也能找到
+        const card = cards.find(c => String(c.id) === String(id)); 
+        if (!card) return;
+        document.getElementById('edit-id').value = card.id; 
+        document.getElementById('edit-word').value = card.word; 
+        document.getElementById('edit-ipa').value = card.ipa;
+        const container = document.getElementById('edit-defs-container'); 
+        container.innerHTML = '';
+        card.definitions.forEach(def => { addDefinitionInput('edit-defs-container', def); });
+        document.getElementById('edit-modal').style.display = 'flex';
+    }
+    function closeEditModal() { document.getElementById('edit-modal').style.display = 'none'; }
+
+    function getLevelColor(level) {
+        const hue = Math.min(level, 9) * 13; 
+        return `hsl(${hue}, 80%, 60%)`; 
+    }
+    function getTimeUntil(timestamp) {
+        const diff = timestamp - Date.now();
+        if (diff <= 0) return "Review Now!";
+        const minutes = Math.floor(diff / 60000);
+        const hours = Math.floor(minutes / 60);
+        const days = Math.floor(hours / 24);
+        if (days > 0) return `in ${days}d`;
+        if (hours > 0) return `in ${hours}h`;
+        return `in ${minutes}m`;
+    }
+
+    function renderCards() {
+        const list = document.getElementById('card-list');
+        list.innerHTML = '';
+        
+        const sortedCards = [...cards].sort((a, b) => {
+            const now = Date.now();
+            const aDue = now >= a.nextReview;
+            const bDue = now >= b.nextReview;
+            if (aDue && !bDue) return -1;
+            if (!aDue && bDue) return 1;
+            return b.id - a.id; 
+        });
+
+        sortedCards.forEach(card => {
+            const el = document.createElement('div');
+            const isDue = Date.now() >= card.nextReview;
+            el.className = `word-card ${isDue ? 'review-highlight' : ''}`;
+            
+            const progressPercent = Math.min((card.level / 9) * 100, 100);
+            const levelColor = getLevelColor(card.level);
+            const timeText = getTimeUntil(card.nextReview);
+
+            // ✨ 新增的：把詳細解釋印在簡短翻譯跟例句的中間
+            let defsHtml = '';
+            card.definitions.forEach(def => {
+                const posClass = `pos-${def.pos.replace('.','')}`;
+                defsHtml += `
+                    <div class="def-row">
+                        <div class="pos-tag ${posClass}">${def.pos}</div>
+                        <div class="def-content">
+                            <div class="meaning-text">${def.meaning}</div>
+                            ${def.explanation ? `<div style="font-size:0.9em; color:var(--text-sub); margin-top:4px;">${def.explanation}</div>` : ''}
+                            ${def.sentence ? `<div class="sentence-text">${def.sentence}</div>` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+
+            // 將 onClick 裡的 card.id 包上引號，防止字串 ID 造成語法錯誤
+            el.innerHTML = `
+                <div class="card-header">
+                    <div style="display:flex; align-items:center;">
+                        <span class="word-title">${card.word}</span>
+                        <span class="word-ipa">${card.ipa}</span>
+                    </div>
+                    <span class="timer-badge ${isDue ? 'timer-due' : ''}">${timeText}</span>
+                    <div style="display:flex; align-items:center; gap:10px; margin-left:10px;">
+                        <span class="level-badge" style="color:${levelColor}; border-color:${levelColor}">Lv.${card.level}</span>
+                        <div style="display:flex; gap:6px;">
+                            <button class="btn btn-secondary btn-icon" onclick="speak('${card.word}')">🔊</button>
+                            <button class="btn btn-primary btn-icon" onclick="openEditModal('${card.id}')">✎</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    ${defsHtml}
+                </div>
+                <div class="level-bar-container">
+                    <div class="level-bar-fill" style="width:${progressPercent}%; background-color:${levelColor};"></div>
+                </div>
+            `;
+            list.appendChild(el);
+        });
+    }
+
+    // --- SRS 演算法 ---
+    function checkReview() {
+        const now = Date.now();
+        reviewList = cards.filter(c => now >= c.nextReview);
+        renderCards(); 
+        const area = document.getElementById('notification-area');
+        if (reviewList.length > 0) {
+            area.style.display = 'block';
+            area.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span>🔔 <strong>SRS 系統提醒：</strong> 今天有 ${reviewList.length} 個單字到期了！</span>
+                    <button class="btn btn-primary" style="background:#f59e0b; color:black;" onclick="startQuiz('review')">開始複習 (計分)</button>
+                </div>
+            `;
+        } else {
+            area.style.display = 'none';
+        }
+    }
+
+    function calculateNextInterval(level) {
+        const oneDay = 24 * 60 * 60 * 1000;
+        switch(level) {
+            case 1: return 1 * oneDay;  
+            case 2: return 2 * oneDay;  
+            case 3: return 7 * oneDay;  
+            case 4: return 15 * oneDay; 
+            default: return 30 * oneDay; 
+        }
+    }
+
+    // --- 測驗系統 ---
+    function startQuiz(mode) {
+        currentMode = mode;
+        const badgeEl = document.getElementById('quiz-mode-badge');
+        
+        if (mode === 'review') {
+            quizQueue = cards.filter(c => Date.now() >= c.nextReview);
+            if (quizQueue.length === 0) { alert('現在沒有單字需要複習！'); return; }
+            badgeEl.innerText = '🔥 SRS 計分模式';
+            badgeEl.style.background = 'var(--warning)'; badgeEl.style.color = '#000';
+        } else {
+            quizQueue = [...cards].sort(() => Math.random() - 0.5).slice(0, 20);
+            if (quizQueue.length === 0) { alert('單字庫沒東西，請先新增單字！'); return; }
+            badgeEl.innerText = '🎲 隨機沙盒 (不計分)';
+            badgeEl.style.background = 'var(--practice)'; badgeEl.style.color = '#fff';
+        }
+
+        document.getElementById('quiz-modal').style.display = 'flex';
+        nextQuestion();
+    }
+
+    function nextQuestion() {
+        document.getElementById('quiz-feedback').innerHTML = '';
+        if (quizQueue.length === 0) {
+            document.getElementById('quiz-body').innerHTML = `
+                <h2 style="color:var(--success)">🎉 測驗完成！</h2>
+                <p style="color:var(--text-sub)">${currentMode === 'review' ? '系統已更新下次複習時間。' : '手感不錯！繼續保持。'}</p>
+            `;
+            setTimeout(closeQuiz, 2000);
+            return;
+        }
+
+        const card = quizQueue.pop();
+        const def = card.definitions[Math.floor(Math.random() * card.definitions.length)];
+        const type = Math.floor(Math.random() * 5); 
+        currentQ = { card, def, type }; 
+        
+        let html = '';
+        if (type === 0) { 
+            setTimeout(() => speak(card.word), 300);
+            html = `<h2 style="margin-bottom:10px;">${card.word}</h2><p style="color:var(--text-sub)">(${def.pos}) 請輸入中文意思</p>
+                    <input type="text" id="ans-input" autocomplete="off" placeholder="中文字詞">`;
+        } else if (type === 1) { 
+            html = `<h2 style="margin-bottom:10px;">${def.meaning}</h2><p style="color:var(--text-sub)">(${def.pos}) 請拼出單字</p>
+                    <input type="text" id="ans-input" autocomplete="off" placeholder="英文拼字">`;
+        } else if (type === 2) { 
+            const masked = def.sentence ? def.sentence.replace(new RegExp(card.word, 'gi'), '_____') : null;
+            if (masked) {
+                html = `<div style="background:var(--input-bg); padding:15px; border-radius:8px; font-style:italic; margin-bottom:15px; text-align:left;">${masked}</div>
+                        <p style="color:var(--text-sub)">(${def.pos}) ${def.meaning}</p>
+                        <input type="text" id="ans-input" autocomplete="off" placeholder="填入缺少的單字">`;
+            } else {
+                setTimeout(() => speak(card.word), 300);
+                currentQ.type = 0; 
+                html = `<h2 style="margin-bottom:10px;">${card.word}</h2><p style="color:var(--text-sub)">(${def.pos}) 請輸入中文意思 (無例句)</p>
+                        <input type="text" id="ans-input" autocomplete="off">`;
+            }
+        } else if (type === 3) {
+            setTimeout(() => speak(card.word), 500);
+            html = `<button class="big-speaker-btn" onclick="speak('${card.word}')">🔊</button>
+                    <p style="color:var(--text-sub)">請聽發音並拼出單字</p>
+                    <input type="text" id="ans-input" autocomplete="off" placeholder="聽寫英文">`;
+        } else if (type === 4) {
+            setTimeout(() => speak(card.word), 300);
+            html = `<h2 style="margin-bottom:5px;">${card.word}</h2>
+                    <div style="font-size:1.2em; color:var(--warning); margin-bottom:15px;">「${def.meaning}」</div>
+                    <p style="color:var(--text-sub)">當作這個意思時，它是什麼詞性？</p>
+                    <div style="display:flex; justify-content:center; gap:5px; margin-bottom:10px; font-size:12px; color:#64748b;">( n. / v. / adj. / adv. / prep. )</div>
+                    <input type="text" id="ans-input" autocomplete="off" placeholder="輸入縮寫，例如 n. 或 adj.">`;
+        }
+
+        html += `<button onclick="checkAns()" class="btn btn-primary" style="width:100%; margin-top:15px;">送出答案</button>`;
+        document.getElementById('quiz-body').innerHTML = html;
+        setTimeout(() => document.getElementById('ans-input').focus(), 100);
+        document.getElementById('ans-input').onkeydown = (e) => { if(e.key==='Enter') checkAns(); };
+    }
+
+    async function checkAns() {
+        const input = document.getElementById('ans-input').value.trim().toLowerCase();
+        const card = currentQ.card;
+        const def = currentQ.def;
+        const type = currentQ.type;
+        
+        let isCorrect = false;
+        let correctAnswerMsg = '';
+
+        if (type === 0) { 
+            isCorrect = def.meaning.includes(input);
+            correctAnswerMsg = def.meaning;
+        } else if (type === 1 || type === 2 || type === 3) { 
+            isCorrect = (input === card.word.toLowerCase());
+            correctAnswerMsg = card.word;
+        } else if (type === 4) { 
+            const standardInput = input.replace('.', '');
+            const standardAns = def.pos.replace('.', '').toLowerCase();
+            isCorrect = (standardInput === standardAns);
+            correctAnswerMsg = def.pos;
+        }
+
+        const fb = document.getElementById('quiz-feedback');
+        
+        if (isCorrect) {
+            fb.innerHTML = '<span style="color:var(--success)">✅ Correct!</span>';
+            if (currentMode === 'review') {
+                if(card.level < 9) card.level++;
+                card.nextReview = Date.now() + calculateNextInterval(card.level); 
+            }
+        } else {
+            fb.innerHTML = `<span style="color:var(--danger)">❌ Ans: <span style="font-weight:bold">${correctAnswerMsg}</span></span>`;
+            if (type !== 0 && type !== 4) speak(card.word); 
+            if (currentMode === 'review') {
+                card.level = 0; 
+                quizQueue.unshift(card); 
+            }
+        }
+        
+        // 答完題，如果是在計分模式，就把進度存回後端
+        if (currentMode === 'review') {
+            try {
+                await fetch(`${API_BASE_URL}/${card.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(card)
+                });
+            } catch(error) {
+                console.error("測驗進度儲存失敗", error);
+            }
+        }
+
+        setTimeout(nextQuestion, 2000);
+    }
+
+    function closeQuiz() { 
+        document.getElementById('quiz-modal').style.display = 'none'; 
+        if (currentMode === 'review') {
+            loadWordsFromAPI(); // 關閉視窗時，重新向伺服器拿最新資料刷新畫面
+        }
+    }
+
+    // --- 一鍵清空表單 ---
+    function clearAddForm() {
+        document.getElementById('input-word').value = ''; 
+        document.getElementById('input-ipa').value = '';
+        document.getElementById('definitions-container').innerHTML = ''; 
+        addDefinitionInput('definitions-container'); 
+    }
+
+    
+</script>
+</body>
+
+</html>
+
+
+
+
+
