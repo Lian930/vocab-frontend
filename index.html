@@ -178,14 +178,25 @@
 
     <div id="quiz-modal" class="modal-overlay">
         <div class="modal-content" style="max-width:500px; text-align: center;">
-            <div class="modal-header" style="justify-content:center; border:none; padding-bottom:0; position:relative;">
-                <h3 id="quiz-title" style="color:var(--primary); margin:0;">測驗中</h3>
-                <span id="quiz-mode-badge" style="position:absolute; right:20px; font-size:10px; background:#475569; padding:2px 6px; border-radius:4px;"></span>
+            
+            <div class="modal-header" style="justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color);">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <h3 id="quiz-title" style="color:var(--primary); margin:0;">測驗設定</h3>
+                    <span id="quiz-mode-badge" style="font-size:10px; padding:2px 6px; border-radius:4px;"></span>
+                </div>
+                <div id="quiz-status" style="display:none; font-size:14px; font-variant-numeric: tabular-nums;">
+                    <span id="quiz-timer" style="color:var(--warning); margin-right:10px;">00:00</span>
+                    <span id="quiz-counter" style="background:#334155; padding:2px 8px; border-radius:12px; font-size:12px;">0/0</span>
+                </div>
             </div>
-            <div class="modal-body" id="quiz-body"></div>
+
+            <div class="modal-body" id="quiz-body">
+                </div>
+
             <div id="quiz-feedback" style="min-height:30px; margin:10px; font-weight:bold;"></div>
-            <div class="modal-footer" style="justify-content:center; border:none; padding-top:0;">
-                <button onclick="closeQuiz()" class="btn btn-secondary" style="width:100%;">結束測驗</button>
+
+            <div class="modal-footer" id="quiz-footer" style="justify-content:center; border:none; padding-top:0;">
+                <button onclick="closeQuiz()" class="btn btn-secondary" style="width:100%;">關閉 / 放棄</button>
             </div>
         </div>
     </div>
@@ -600,85 +611,155 @@
         }
     }
 
-    // --- 測驗系統 ---
+    // --- 🏆 測驗系統 2.0 (設定、計時、進度、篩選、降級懲罰) ---
+    
+    let quizTimerInterval = null;
+    let quizStartTime = 0;
+    let quizTotalCount = 0;
+    let selectedTypes = [0, 1, 2, 3, 4]; // 預設全選
+
+    // 1. 開啟測驗視窗，顯示設定畫面
     function startQuiz(mode) {
         currentMode = mode;
         const badgeEl = document.getElementById('quiz-mode-badge');
+        const statusEl = document.getElementById('quiz-status');
+        const bodyEl = document.getElementById('quiz-body');
+        const footerEl = document.getElementById('quiz-footer');
         
+        statusEl.style.display = 'none'; // 設定階段先隱藏計時器
+        document.getElementById('quiz-feedback').innerHTML = '';
+        document.getElementById('quiz-title').innerText = "測驗設定";
+
+        // 準備題目列隊
         if (mode === 'review') {
             quizQueue = cards.filter(c => Date.now() >= c.nextReview);
-            if (quizQueue.length === 0) { alert('現在沒有單字需要複習！'); return; }
-            badgeEl.innerText = '🔥 SRS 計分模式';
+            if (quizQueue.length === 0) { alert('太棒了！目前沒有需要複習的單字。'); return; }
+            badgeEl.innerText = '🔥 SRS 計分';
             badgeEl.style.background = 'var(--warning)'; badgeEl.style.color = '#000';
         } else {
-            quizQueue = [...cards].sort(() => Math.random() - 0.5).slice(0, 20);
-            if (quizQueue.length === 0) { alert('單字庫沒東西，請先新增單字！'); return; }
-            badgeEl.innerText = '🎲 隨機沙盒 (不計分)';
+            quizQueue = [...cards].sort(() => Math.random() - 0.5).slice(0, 20); // 隨機取 20 題
+            if (quizQueue.length === 0) { alert('單字庫是空的，請先新增單字！'); return; }
+            badgeEl.innerText = '🎲 隨機練習';
             badgeEl.style.background = 'var(--practice)'; badgeEl.style.color = '#fff';
         }
 
+        quizTotalCount = quizQueue.length;
         document.getElementById('quiz-modal').style.display = 'flex';
+
+        // 顯示「題型選擇」畫面 (Checkboxes)
+        bodyEl.innerHTML = `
+            <div style="text-align:left; padding:0 20px;">
+                <p style="color:var(--text-sub); margin-bottom:15px;">本次共有 <strong>${quizTotalCount}</strong> 個單字。請勾選想練習的題型：</p>
+                <label style="display:block; margin-bottom:8px; cursor:pointer;"><input type="checkbox" name="qType" value="0" checked> 英翻中 (單字 -> 中文)</label>
+                <label style="display:block; margin-bottom:8px; cursor:pointer;"><input type="checkbox" name="qType" value="1" checked> 中翻英 (中文 -> 拼字)</label>
+                <label style="display:block; margin-bottom:8px; cursor:pointer;"><input type="checkbox" name="qType" value="2" checked> 填空題 (句子挖空)</label>
+                <label style="display:block; margin-bottom:8px; cursor:pointer;"><input type="checkbox" name="qType" value="3" checked> 聽寫題 (聽音 -> 拼字)</label>
+                <label style="display:block; margin-bottom:8px; cursor:pointer;"><input type="checkbox" name="qType" value="4" checked> 詞性題 (判斷詞性)</label>
+            </div>
+            <button onclick="beginSession()" class="btn btn-primary" style="width:100%; margin-top:20px; font-size:1.2em;">🚀 開始測驗</button>
+        `;
+        
+        // 隱藏原本的關閉按鈕，改由上面的 HTML 控制
+        footerEl.innerHTML = '<button onclick="closeQuiz()" class="btn btn-secondary" style="width:100%;">取消</button>';
+    }
+
+    // 2. 真正開始 (按下「開始測驗」後)
+    function beginSession() {
+        // 取得使用者勾選的題型
+        const checkboxes = document.querySelectorAll('input[name="qType"]:checked');
+        selectedTypes = Array.from(checkboxes).map(cb => parseInt(cb.value));
+        
+        if (selectedTypes.length === 0) { alert("請至少勾選一種題型！"); return; }
+
+        document.getElementById('quiz-title').innerText = currentMode === 'review' ? "複習中..." : "練習中...";
+        document.getElementById('quiz-status').style.display = 'block'; // 顯示計時器與進度
+        
+        // 啟動計時器
+        quizStartTime = Date.now();
+        if (quizTimerInterval) clearInterval(quizTimerInterval);
+        
+        quizTimerInterval = setInterval(() => {
+            const diff = Math.floor((Date.now() - quizStartTime) / 1000);
+            const m = Math.floor(diff / 60).toString().padStart(2, '0');
+            const s = (diff % 60).toString().padStart(2, '0');
+            document.getElementById('quiz-timer').innerText = `${m}:${s}`;
+        }, 1000);
+
+        // 恢復 footer
+        document.getElementById('quiz-footer').innerHTML = '<button onclick="closeQuiz()" class="btn btn-secondary" style="width:100%;">中斷測驗</button>';
+
         nextQuestion();
     }
 
     function nextQuestion() {
         document.getElementById('quiz-feedback').innerHTML = '';
+        
+        // 更新進度顯示 (例如: 4/10)
+        // 因為 pop() 會讓 length 變小，所以用 (總數 - 剩餘數 + 1)
+        const currentIdx = quizTotalCount - quizQueue.length + 1;
+        document.getElementById('quiz-counter').innerText = `${Math.min(currentIdx, quizTotalCount)} / ${quizTotalCount}`;
+
         if (quizQueue.length === 0) {
-            document.getElementById('quiz-body').innerHTML = `
-                <h2 style="color:var(--success)">🎉 測驗完成！</h2>
-                <p style="color:var(--text-sub)">${currentMode === 'review' ? '系統已更新下次複習時間。' : '手感不錯！繼續保持。'}</p>
-            `;
-            setTimeout(closeQuiz, 2000);
+            finishQuiz();
             return;
         }
 
-        const card = quizQueue.pop();
+        const card = quizQueue.pop(); // 取出一張卡片
         const def = card.definitions[Math.floor(Math.random() * card.definitions.length)];
-        const type = Math.floor(Math.random() * 5); 
+        
+        // 從使用者勾選的題型中隨機選一個
+        const type = selectedTypes[Math.floor(Math.random() * selectedTypes.length)];
         currentQ = { card, def, type }; 
         
         let html = '';
-        if (type === 0) { 
+        // --- 產生題目 HTML (根據題型) ---
+        if (type === 0) { // 英翻中
             setTimeout(() => speak(card.word), 300);
-            html = `<h2 style="margin-bottom:10px;">${card.word}</h2><p style="color:var(--text-sub)">(${def.pos}) 請輸入中文意思</p>
+            html = `<h2 style="margin-bottom:10px;">${card.word}</h2>
+                    <p style="color:var(--text-sub)">(${def.pos}) 請輸入中文意思</p>
                     <input type="text" id="ans-input" autocomplete="off" placeholder="中文字詞">`;
-        } else if (type === 1) { 
-            html = `<h2 style="margin-bottom:10px;">${def.meaning}</h2><p style="color:var(--text-sub)">(${def.pos}) 請拼出單字</p>
+        } else if (type === 1) { // 中翻英
+            html = `<h2 style="margin-bottom:10px;">${def.meaning}</h2>
+                    <p style="color:var(--text-sub)">(${def.pos}) 請拼出單字</p>
                     <input type="text" id="ans-input" autocomplete="off" placeholder="英文拼字">`;
-        } else if (type === 2) { 
+        } else if (type === 2) { // 填空
             const masked = def.sentence ? def.sentence.replace(new RegExp(card.word, 'gi'), '_____') : null;
             if (masked) {
                 html = `<div style="background:var(--input-bg); padding:15px; border-radius:8px; font-style:italic; margin-bottom:15px; text-align:left;">${masked}</div>
                         <p style="color:var(--text-sub)">(${def.pos}) ${def.meaning}</p>
                         <input type="text" id="ans-input" autocomplete="off" placeholder="填入缺少的單字">`;
             } else {
-                setTimeout(() => speak(card.word), 300);
+                // 如果沒有例句，自動降級為 Type 0
                 currentQ.type = 0; 
-                html = `<h2 style="margin-bottom:10px;">${card.word}</h2><p style="color:var(--text-sub)">(${def.pos}) 請輸入中文意思 (無例句)</p>
-                        <input type="text" id="ans-input" autocomplete="off">`;
+                setTimeout(() => speak(card.word), 300);
+                html = `<h2 style="margin-bottom:10px;">${card.word}</h2><p style="color:var(--text-sub)">(${def.pos}) 請輸入中文意思 (無例句)</p><input type="text" id="ans-input" autocomplete="off">`;
             }
-        } else if (type === 3) {
+        } else if (type === 3) { // 聽寫
             setTimeout(() => speak(card.word), 500);
             html = `<button class="big-speaker-btn" onclick="speak('${card.word}')">🔊</button>
                     <p style="color:var(--text-sub)">請聽發音並拼出單字</p>
                     <input type="text" id="ans-input" autocomplete="off" placeholder="聽寫英文">`;
-        } else if (type === 4) {
+        } else if (type === 4) { // 詞性
             setTimeout(() => speak(card.word), 300);
             html = `<h2 style="margin-bottom:5px;">${card.word}</h2>
                     <div style="font-size:1.2em; color:var(--warning); margin-bottom:15px;">「${def.meaning}」</div>
                     <p style="color:var(--text-sub)">當作這個意思時，它是什麼詞性？</p>
                     <div style="display:flex; justify-content:center; gap:5px; margin-bottom:10px; font-size:12px; color:#64748b;">( n. / v. / adj. / adv. / prep. )</div>
-                    <input type="text" id="ans-input" autocomplete="off" placeholder="輸入縮寫，例如 n. 或 adj.">`;
+                    <input type="text" id="ans-input" autocomplete="off" placeholder="輸入縮寫">`;
         }
 
         html += `<button onclick="checkAns()" class="btn btn-primary" style="width:100%; margin-top:15px;">送出答案</button>`;
         document.getElementById('quiz-body').innerHTML = html;
-        setTimeout(() => document.getElementById('ans-input').focus(), 100);
-        document.getElementById('ans-input').onkeydown = (e) => { if(e.key==='Enter') checkAns(); };
+        setTimeout(() => {
+            const input = document.getElementById('ans-input');
+            if(input) { input.focus(); input.onkeydown = (e) => { if(e.key==='Enter') checkAns(); }; }
+        }, 100);
     }
 
     async function checkAns() {
-        const input = document.getElementById('ans-input').value.trim().toLowerCase();
+        const inputEl = document.getElementById('ans-input');
+        if (!inputEl) return;
+        const input = inputEl.value.trim().toLowerCase();
         const card = currentQ.card;
         const def = currentQ.def;
         const type = currentQ.type;
@@ -686,6 +767,7 @@
         let isCorrect = false;
         let correctAnswerMsg = '';
 
+        // 檢查邏輯
         if (type === 0) { 
             isCorrect = def.meaning.includes(input);
             correctAnswerMsg = def.meaning;
@@ -706,36 +788,54 @@
             if (currentMode === 'review') {
                 if(card.level < 9) card.level++;
                 card.nextReview = Date.now() + calculateNextInterval(card.level); 
+                updateCardInBackend(card); // 答對即存檔
             }
         } else {
             fb.innerHTML = `<span style="color:var(--danger)">❌ Ans: <span style="font-weight:bold">${correctAnswerMsg}</span></span>`;
             if (type !== 0 && type !== 4) speak(card.word); 
+            
             if (currentMode === 'review') {
-                card.level = 0; 
+                // 🛑 懲罰機制修改：答錯時等級減 1 (最低為 0)，而不是直接歸零
+                card.level = Math.max(0, card.level - 1);
+                card.nextReview = Date.now() + calculateNextInterval(card.level); // 根據降級後的 Level 重新計算時間
+                updateCardInBackend(card); // 答錯也存檔
+                
+                // 錯題放回隊列重新練習（放到最下面，這次不算分，只是讓你再練一次）
                 quizQueue.unshift(card); 
             }
         }
         
-        // 答完題，如果是在計分模式，就把進度存回後端
-        if (currentMode === 'review') {
-            try {
-                await fetch(`${API_BASE_URL}/${card.id}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(card)
-                });
-            } catch(error) {
-                console.error("測驗進度儲存失敗", error);
-            }
-        }
+        setTimeout(nextQuestion, 2000); // 2秒後下一題
+    }
 
-        setTimeout(nextQuestion, 2000);
+    function finishQuiz() {
+        if (quizTimerInterval) clearInterval(quizTimerInterval);
+        const duration = document.getElementById('quiz-timer').innerText;
+        
+        document.getElementById('quiz-body').innerHTML = `
+            <h2 style="color:var(--success)">🎉 測驗完成！</h2>
+            <p style="font-size:1.2em;">耗時：${duration}</p>
+            <p style="color:var(--text-sub)">${currentMode === 'review' ? '系統已更新記憶曲線。' : '手感不錯！繼續保持。'}</p>
+        `;
+        document.getElementById('quiz-footer').innerHTML = '<button onclick="closeQuiz()" class="btn btn-primary" style="width:100%;">結束</button>';
+    }
+
+    // 獨立出來的更新函式
+    async function updateCardInBackend(card) {
+        try {
+            await fetch(`${API_BASE_URL}/${card.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(card)
+            });
+        } catch(e) { console.error("SRS 更新失敗", e); }
     }
 
     function closeQuiz() { 
+        if (quizTimerInterval) clearInterval(quizTimerInterval);
         document.getElementById('quiz-modal').style.display = 'none'; 
         if (currentMode === 'review') {
-            loadWordsFromAPI(); // 關閉視窗時，重新向伺服器拿最新資料刷新畫面
+            loadWordsFromAPI(); // 結束後刷新主畫面
         }
     }
 
