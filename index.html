@@ -5,114 +5,202 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vocab Master v7.1 (Cloud Sync Edition)</title>
     <style>
-        :root {
-            --bg-color: #0f172a;       
-            --card-bg: #1e293b;        
-            --input-bg: #334155;       
-            --text-main: #f8fafc;      
-            --text-sub: #94a3b8;       
-            --border-color: #475569;   
-            --primary: #3b82f6;        
-            --primary-hover: #2563eb;
-            --success: #10b981;        
-            --danger: #ef4444;         
-            --warning: #f59e0b;
-            --practice: #10b981; 
-            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -1px rgb(0 0 0 / 0.06);
-        }
-
-        body { 
-            font-family: 'Segoe UI', 'Roboto', Helvetica, Arial, sans-serif; 
-            background: var(--bg-color); 
-            color: var(--text-main);
-            max-width: 900px; margin: 0 auto; padding: 20px; line-height: 1.6;
-        }
-
-        .btn {
-            display: inline-flex; align-items: center; justify-content: center;
-            padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 14px;
-            cursor: pointer; transition: all 0.2s; border: none; gap: 6px;
-        }
-        .btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-success { background: var(--success); color: white; }
-        .btn-secondary { background: var(--input-bg); color: var(--text-main); border: 1px solid var(--border-color); }
-        .btn-danger { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid var(--danger); }
-        .btn-danger:hover { background: var(--danger); color: white; }
-        .btn-icon { padding: 6px; border-radius: 50%; width: 32px; height: 32px;}
-
-        input, select, textarea { 
-            width: 100%; padding: 10px 12px; background: var(--input-bg); 
-            border: 1px solid var(--border-color); color: white; 
-            border-radius: 6px; box-sizing: border-box; font-size: 14px; 
-            font-family: inherit; transition: border-color 0.2s;
-        }
-        input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); }
-
-        .container { 
-            background: var(--card-bg); padding: 24px; border-radius: 12px; 
-            box-shadow: var(--shadow-md); margin-bottom: 24px; border: 1px solid var(--border-color);
-        }
-
-        .section-header {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid var(--primary);
-        }
-        .toggle-btn { font-size: 12px; color: var(--text-sub); cursor: pointer; user-select: none; }
-        .toggle-btn:hover { color: var(--primary); }
-
-        .def-group { 
-            background: rgba(0,0,0,0.15); 
-            padding: 16px; border-radius: 8px; margin-bottom: 12px; 
-            border-left: 3px solid var(--text-sub);
-        }
-
-        .word-card { 
-            background: #252f40; border: 1px solid var(--border-color); 
-            padding: 0; border-radius: 8px; margin-bottom: 20px; 
-            overflow: hidden; transition: transform 0.2s, box-shadow 0.2s; position: relative;
-        }
-        .word-card:hover { transform: translateY(-3px); box-shadow: 0 10px 20px -3px rgb(0 0 0 / 0.2); }
-        .review-highlight { border: 2px solid var(--warning) !important; box-shadow: 0 0 15px rgba(245, 158, 11, 0.2); }
+    :root {
+        /* 🎨 深燕麥極簡風 (Darker Oatmeal / Warm Stone) */
         
-        .timer-badge {
-            font-size: 11px; font-weight: bold; padding: 2px 8px; border-radius: 12px;
-            background: rgba(255,255,255,0.1); color: var(--text-sub); margin-left: auto;
-        }
-        .timer-due { background: var(--warning); color: black; animation: pulse 2s infinite;}
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
-
-        .card-header { 
-            background: rgba(0,0,0,0.2); padding: 12px 20px; 
-            display: flex; align-items: center; gap: 10px; border-bottom: 1px solid rgba(255,255,255,0.05);
-        }
-        .word-title { font-size: 1.5em; font-weight: 700; color: white; letter-spacing: 0.5px; }
-        .word-ipa { color: var(--text-sub); font-family: 'Arial Unicode MS', sans-serif; font-size: 0.9em; background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px;}
-        .card-body { padding: 16px 20px; padding-bottom: 24px; }
+        /* 背景：加深的暖灰石色，更有份量感，完全不刺眼 */
+        --bg-color: #d1cec7;           
         
-        .level-bar-container { position: absolute; bottom: 0; left: 0; width: 100%; height: 6px; background: #0f172a; }
-        .level-bar-fill { height: 100%; transition: width 0.3s, background-color 0.3s; }
-        .level-badge { font-size: 11px; font-weight: bold; padding: 2px 6px; border-radius: 4px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); }
+        /* 卡片：帶有灰度的米色，不再是亮白，像再生紙板 */
+        --card-bg: #e3e1dd;            
+        
+        /* 輸入框：比卡片稍深，形成自然凹槽 */
+        --input-bg: #d6d3ce;           
+        
+        /* 文字系統：深炭黑，保持清晰閱讀 */
+        --text-main: #292524;          
+        --text-sub: #57534e;           
+        
+        /* 邊框：使用深一點的岩石色 */
+        --border-color: #bab8b3;       
+        
+        /* 品牌色：維持深炭黑，穩重 */
+        --primary: #1c1917;            
+        --primary-hover: #000000;
+        
+        /* 功能色：稍微調深一點點，適應深色背景 */
+        --success: #15803d;            
+        --danger: #b91c1c;             
+        --warning: #b45309;            
+        --practice: #7e22ce;           
+        
+        /* ☁️ 陰影：因為背景變深，陰影需要加重一點才會有立體感 */
+        --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.08);
+        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
 
-        .def-row { margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px dashed rgba(255,255,255,0.1); display: grid; grid-template-columns: 40px 1fr; gap: 12px; }
-        .def-row:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
-        .pos-tag { font-size: 12px; font-weight: 800; text-transform: uppercase; color: var(--text-sub); text-align: right; margin-top: 4px;}
-        .pos-n { color: #60a5fa; } .pos-v { color: #f472b6; } .pos-adj { color: #34d399; } .pos-adv { color: #fbbf24; }
-        .meaning-text { font-size: 1.1em; color: var(--text-main); font-weight: 500; }
-        .sentence-text { margin-top: 4px; font-size: 0.9em; color: #94a3b8; font-style: italic; border-left: 2px solid #475569; padding-left: 8px; }
+    body { 
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        background: var(--bg-color); 
+        color: var(--text-main);
+        max-width: 900px; margin: 0 auto; padding: 40px 20px; line-height: 1.7;
+        -webkit-font-smoothing: antialiased; 
+    }
 
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(4px); }
-        .modal-content { background: var(--card-bg); width: 90%; max-width: 650px; max-height: 90vh; overflow-y: auto; padding: 0; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1); }
-        .modal-header { padding: 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;}
-        .modal-body { padding: 20px; }
-        .modal-footer { padding: 20px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 10px; background: rgba(0,0,0,0.1); }
+    /* --- 按鈕設計 --- */
+    .btn {
+        display: inline-flex; align-items: center; justify-content: center;
+        padding: 10px 22px; border-radius: 8px; font-weight: 600; font-size: 14px;
+        cursor: pointer; transition: all 0.2s ease; border: 1px solid transparent; gap: 8px;
+        box-shadow: var(--shadow-sm); letter-spacing: 0.5px;
+    }
+    .btn:active { transform: scale(0.98); }
+    
+    .btn-primary { background: var(--primary); color: #e3e1dd; } 
+    .btn-primary:hover { background: var(--primary-hover); box-shadow: var(--shadow-md); }
+    
+    .btn-success { background: var(--success); color: #f0fdf4; }
+    
+    /* 次要按鈕 */
+    .btn-secondary { background: var(--card-bg); color: var(--text-main); border: 1px solid var(--border-color); }
+    .btn-secondary:hover { background: #d6d3ce; border-color: #78716c; }
+    
+    .btn-danger { background: #fee2e2; color: var(--danger); border: 1px solid #fecaca; }
+    .btn-danger:hover { background: var(--danger); color: white; border-color: var(--danger); }
+    
+    .btn-icon { padding: 0; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center;}
 
-        #notification-area { background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.4); color: #fcd34d; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: none; animation: fadeIn 0.5s; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+    /* --- 排序工具列樣式 --- */
+    .sort-toolbar {
+        display: flex; justify-content: flex-end; align-items: center; gap: 10px;
+        margin-bottom: 20px; padding: 10px;
+        background: rgba(0,0,0,0.03); border-radius: 8px;
+    }
+    
+    .sort-select {
+        padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-color);
+        background: var(--card-bg); color: var(--text-main); font-size: 13px; font-weight: 500;
+        cursor: pointer; outline: none; box-shadow: var(--shadow-sm);
+        min-width: 150px;
+    }
+    .sort-select:hover { border-color: var(--text-sub); }
+    .sort-select:focus { border-color: var(--primary); }
 
-        .big-speaker-btn { background: var(--primary); color: white; border: none; border-radius: 50%; width: 80px; height: 80px; font-size: 36px; cursor: pointer; display: flex; align-items: center; justify-content: center; margin: 20px auto; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.5); transition: transform 0.1s; }
-        .big-speaker-btn:active { transform: scale(0.9); }
-    </style>
+
+    /* --- 輸入框 --- */
+    input, select, textarea { 
+        width: 100%; padding: 14px 16px; background: var(--input-bg); 
+        border: 1px solid transparent; 
+        color: var(--text-main); 
+        border-radius: 8px; box-sizing: border-box; font-size: 15px; 
+        font-family: inherit; transition: all 0.2s;
+        box-shadow: inset 0 1px 2px rgba(0,0,0,0.06); /* 內陰影加深 */
+    }
+    input:focus, select:focus, textarea:focus { 
+        outline: none; background: #fafafa; 
+        border-color: #78716c; 
+        box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05); 
+    }
+
+    /* --- 容器區塊 --- */
+    .container { 
+        background: var(--card-bg); padding: 40px; border-radius: 16px; 
+        box-shadow: var(--shadow-md); margin-bottom: 24px; 
+        border: 1px solid rgba(255,255,255,0.2); 
+    }
+
+    .section-header {
+        display: flex; justify-content: space-between; align-items: center;
+        margin-bottom: 24px; padding-bottom: 16px; 
+        border-bottom: 1px solid var(--border-color);
+    }
+    .section-header h2 { font-weight: 800; letter-spacing: -0.5px; color: var(--primary); }
+
+    .toggle-btn { font-size: 13px; color: var(--text-sub); cursor: pointer; padding: 6px 10px; border-radius: 6px; transition: 0.2s; background: var(--bg-color); font-weight: 600;}
+    .toggle-btn:hover { background: #bab8b3; color: black; }
+
+    /* 定義群組 */
+    .def-group { 
+        background: #dcd9d5; 
+        padding: 24px; border-radius: 12px; margin-bottom: 16px; 
+        border: 1px solid var(--border-color);
+    }
+
+    /* --- 單字卡片 --- */
+    .word-card { 
+        background: var(--card-bg); 
+        border: 1px solid transparent; 
+        padding: 0; border-radius: 16px; margin-bottom: 24px; 
+        overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative;
+        box-shadow: var(--shadow-sm);
+    }
+    
+    .word-card:hover { 
+        transform: translateY(-4px); 
+        box-shadow: var(--shadow-lg); 
+        border-color: rgba(0,0,0,0.15); 
+    }
+    
+    .review-highlight { border: 2px solid #b45309 !important; box-shadow: 0 10px 30px -5px rgba(180, 83, 9, 0.2); }
+
+    .card-header { 
+        background: rgba(255,255,255,0.3); 
+        padding: 20px 28px; 
+        display: flex; align-items: center; gap: 12px; 
+        border-bottom: 1px solid var(--border-color);
+    }
+    .word-title { font-size: 1.8em; font-weight: 800; color: var(--text-main); letter-spacing: -0.5px; }
+    .word-ipa { color: var(--text-sub); font-family: 'Arial Unicode MS', sans-serif; font-size: 0.95em; background: var(--bg-color); padding: 4px 10px; border-radius: 6px; font-weight: 500;}
+    
+    .timer-badge {
+        font-size: 11px; font-weight: 700; padding: 6px 12px; border-radius: 20px;
+        background: var(--bg-color); color: var(--text-sub); margin-left: auto; text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .timer-due { background: var(--warning); color: white; animation: pulse 2s infinite;}
+    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.8; } 100% { opacity: 1; } }
+
+    .card-body { padding: 24px 28px; }
+
+    .def-row { margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px dashed var(--border-color); display: grid; grid-template-columns: 50px 1fr; gap: 16px; }
+    .def-row:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+    
+    .pos-tag { font-size: 12px; font-weight: 800; text-transform: uppercase; color: var(--text-sub); text-align: right; margin-top: 6px; letter-spacing: 0.5px;}
+    .pos-n { color: #0369a1; } .pos-v { color: #be123c; } .pos-adj { color: #047857; } .pos-adv { color: #b45309; } .pos-phr { color: #6d28d9; }
+    
+    .meaning-text { font-size: 1.2em; color: var(--text-main); font-weight: 600; line-height: 1.4; }
+    .sentence-text { margin-top: 8px; font-size: 1em; color: var(--text-sub); font-style: italic; border-left: 3px solid var(--border-color); padding-left: 14px; line-height: 1.6;}
+
+    .level-bar-container { position: absolute; bottom: 0; left: 0; width: 100%; height: 5px; background: var(--bg-color); }
+    .level-bar-fill { height: 100%; transition: width 0.5s ease-out; }
+
+    /* --- Modal 視窗 --- */
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(40, 40, 40, 0.5); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(6px); }
+    .modal-content { background: var(--card-bg); width: 90%; max-width: 550px; border-radius: 20px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); border: 1px solid var(--border-color); overflow: hidden; max-height: 90vh; overflow-y: auto;}
+    
+    .modal-header { padding: 24px; background: rgba(255,255,255,0.3); border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;}
+    .modal-body { padding: 28px; }
+    .modal-footer { padding: 20px 24px; background: rgba(255,255,255,0.3); border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 12px; }
+
+    /* --- 測驗選單 --- */
+    .quiz-option-label {
+        display: flex; align-items: center; gap: 14px;
+        padding: 16px 20px; margin-bottom: 12px;
+        border: 1px solid var(--border-color); border-radius: 12px;
+        cursor: pointer; transition: all 0.2s; text-align: left;
+        background: #f5f5f4; /* 比卡片亮一點 */
+        box-shadow: var(--shadow-sm);
+    }
+    .quiz-option-label:hover { border-color: var(--text-main); background: #ffffff; transform: translateY(-1px); box-shadow: var(--shadow-md); }
+    .quiz-option-label input[type="checkbox"] { width: 20px; height: 20px; margin: 0; cursor: pointer; accent-color: var(--text-main); }
+
+    #notification-area { background: #fef3c7; border: 1px solid #d97706; color: #92400e; padding: 16px; border-radius: 12px; margin-bottom: 24px; display: none; box-shadow: var(--shadow-sm); }
+    
+    .big-speaker-btn { background: var(--text-main); color: #e3e1dd; border: none; border-radius: 50%; width: 100px; height: 100px; font-size: 44px; cursor: pointer; display: flex; align-items: center; justify-content: center; margin: 30px auto; box-shadow: 0 10px 25px rgba(0,0,0, 0.2); transition: transform 0.2s; }
+    .big-speaker-btn:active { transform: scale(0.95); }
+
+
+</style>
 </head>
 <body>
 
@@ -152,6 +240,19 @@
                 <button onclick="startQuiz('practice')" class="btn btn-success" style="font-size:13px;" title="不影響複習進度，純練手感">🎲 隨機刷題</button>
             </div>
         </div>
+
+        <div class="sort-toolbar">
+        <label style="font-size:13px; color:var(--text-sub); font-weight:600;">排序方式：</label>
+        <select id="sort-mode" class="sort-select" onchange="renderCards()">
+            <option value="review-asc">⏳ 複習時間 (由近到遠)</option>
+            <option value="review-desc">📅 複習時間 (由遠到近)</option>
+            <option value="level-asc">🌱 等級 (由低到高)</option>
+            <option value="level-desc">🌳 等級 (由高到低)</option>
+            <option value="alpha-asc">🔤 字母順序 (A-Z)</option>
+            <option value="alpha-desc">🔤 字母順序 (Z-A)</option>
+        </select>
+    </div>
+        
         <div id="card-list"></div>
     </div>
 
@@ -222,52 +323,70 @@
     function toggleSection(id) { const el = document.getElementById(id); el.style.display = (el.style.display === 'none') ? 'block' : 'none'; }
     function speak(text) { const u = new SpeechSynthesisUtterance(text); u.lang = 'en-US'; window.speechSynthesis.speak(u); }
 
+    // --- 輔助函式：取得今天的午夜時間戳記 (00:00:00) ---
+    function getTodayMidnight() {
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+        return now.getTime();
+    }
     // --- 雲端資料操作 (CRUD) ---
     // --- 升級版：SWR 雙重載入機制 (LocalStorage + 雲端同步) ---
+    // --- 雲端資料操作 (CRUD) ---
     async function loadWordsFromAPI() {
-        const loadingIndicator = document.getElementById('loading-indicator'); // 如果你有載入動畫的話
+        const loadingIndicator = document.getElementById('loading-indicator'); 
         if (loadingIndicator) loadingIndicator.style.display = 'block';
 
-        // 🌟 步驟一：先從瀏覽器 LocalStorage 挖出歷史備份
         const cachedData = localStorage.getItem('vocab_cache_data');
         if (cachedData) {
             try {
-                // 如果有備份，0.1 秒瞬間畫出畫面！
                 cards = JSON.parse(cachedData);
-                checkReview(); // 呼叫你原本畫出單字列表的函式
-                updateCount(); // 呼叫你原本更新統計數字的函式
+                checkReview(); 
+                updateCount(); 
                 console.log("⚡ 瞬間載入本機快取！");
             } catch (e) {
                 console.error("快取解析失敗，忽略快取", e);
             }
         }
 
-        // ☁️ 步驟二：背景默默向 Render 雲端伺服器請求最新資料
         try {
             const response = await fetch(API_BASE_URL);
             if (response.ok) {
                 const freshCards = await response.json();
                 
-                // 將雲端資料轉為字串，用來比對
-                const freshDataString = JSON.stringify(freshCards);
+                // 🛑 自動資料修復邏輯 (Data Cleansing) 🛑
+                // 這裡會檢查每一個從伺服器抓回來的單字
+                cards = freshCards.map(c => {
+                    let safeReview = c.nextReview || Date.now();
+                    const oneDay = 24 * 60 * 60 * 1000;
+                    
+                    // 修正 Bug：如果 Level 是 0 (或 1)，但下次複習時間卻超過 24 小時後
+                    // 表示這是舊邏輯產生的髒資料，強制把它重設為「現在」
+                    if (c.level <= 1 && (safeReview - Date.now() > oneDay)) {
+                        console.warn(`自動修復單字時間異常: ${c.word}`);
+                        safeReview = Date.now(); 
+                    }
+
+                    return {
+                        ...c,
+                        nextReview: safeReview
+                    };
+                });
                 
-                // 🌟 步驟三：如果雲端資料跟本地快取「不一樣」，才重新渲染畫面並更新快取
-                if (freshDataString !== cachedData) {
-                    cards = freshCards;
+                // 將修復後的乾淨資料存回快取，這樣下次載入就不會再錯了
+                const cleanDataString = JSON.stringify(cards);
+                if (cleanDataString !== cachedData) {
                     checkReview();
                     updateCount();
-                    
-                    // 把最新鮮的資料存回 LocalStorage，當作明天的備份
-                    localStorage.setItem('vocab_cache_data', freshDataString);
-                    console.log("☁️ 雲端資料同步完成，畫面與快取已更新！");
+                    renderCards(); // 確保排序邏輯被套用
+                    localStorage.setItem('vocab_cache_data', cleanDataString);
+                    console.log("☁️ 雲端資料同步完成 (含自動修復)！");
                 } else {
-                    console.log("✅ 雲端資料與快取一致，無需重新渲染。");
+                    console.log("✅ 資料一致，無需更新。");
                 }
             } else {
                 console.error("讀取雲端資料失敗，狀態碼：", response.status);
             }
         } catch (error) {
-            // 如果斷網或是伺服器大當機，至少畫面上還有 LocalStorage 的單字可以看！
             console.error("無法連線到雲端伺服器，繼續使用離線快取", error);
         } finally {
             if (loadingIndicator) loadingIndicator.style.display = 'none';
@@ -328,12 +447,12 @@
         let definitions = [];
         
         defGroups.forEach(group => {
-            const expEl = group.querySelector('.input-explanation'); // 抓取詳細解釋
+            const expEl = group.querySelector('.input-explanation'); 
             
             definitions.push({
                 pos: group.querySelector('.input-pos').value,
                 meaning: group.querySelector('.input-meaning').value.trim(),
-                explanation: expEl ? expEl.value.trim() : "", // 存入資料
+                explanation: expEl ? expEl.value.trim() : "", 
                 sentence: group.querySelector('.input-sentence').value.trim()
             });
         });
@@ -348,7 +467,9 @@
             definitions: definitions,
             dateAdded: new Date().toISOString().split('T')[0],
             level: 0,
-            nextReview: Date.now()
+            // 新增時維持 Date.now()，確保你可以「立刻」在 Review 列表看到它並開始學習
+            // 第一次複習後，時間就會被 checkAns 自動校正回午夜基準
+            nextReview: Date.now() 
         };
 
         const saveBtn = document.getElementById('save-new-btn');
@@ -362,7 +483,6 @@
             });
 
             if (response.ok) {
-                // 儲存成功後，自動打掃畫面！
                 if (typeof clearAddForm === "function") {
                     clearAddForm();
                 }
@@ -516,17 +636,48 @@
         return `in ${minutes}m`;
     }
 
+    // --- 渲染卡片 (含排序邏輯) ---
     function renderCards() {
         const list = document.getElementById('card-list');
         list.innerHTML = '';
         
+        // 取得目前的排序模式，如果沒有選單預設為 'review-asc'
+        const sortSelect = document.getElementById('sort-mode');
+        const sortMode = sortSelect ? sortSelect.value : 'review-asc';
+        
+        // 複製一份陣列來排序，以免影響原始資料順序
         const sortedCards = [...cards].sort((a, b) => {
-            const now = Date.now();
-            const aDue = now >= a.nextReview;
-            const bDue = now >= b.nextReview;
-            if (aDue && !bDue) return -1;
-            if (!aDue && bDue) return 1;
-            return b.id - a.id; 
+            // 排序策略：
+            switch (sortMode) {
+                case 'review-asc': // 複習時間 (由近到遠) - 這是預設 SRS 邏輯
+                    return a.nextReview - b.nextReview;
+                
+                case 'review-desc': // 複習時間 (由遠到近)
+                    return b.nextReview - a.nextReview;
+
+                case 'level-asc': // 等級 (由低到高)
+                    if (a.level !== b.level) return a.level - b.level;
+                    return a.nextReview - b.nextReview; // 等級一樣比時間
+                
+                case 'level-desc': // 等級 (由高到低)
+                    if (a.level !== b.level) return b.level - a.level;
+                    return a.nextReview - b.nextReview;
+
+                case 'alpha-asc': // 字母順序 (A-Z)
+                    return a.word.localeCompare(b.word);
+                
+                case 'alpha-desc': // 字母順序 (Z-A)
+                    return b.word.localeCompare(a.word);
+                    
+                default:
+                    // 預設 fallback：先比是否到期，再比 ID (新舊)
+                    const now = Date.now();
+                    const aDue = now >= a.nextReview;
+                    const bDue = now >= b.nextReview;
+                    if (aDue && !bDue) return -1;
+                    if (!aDue && bDue) return 1;
+                    return b.id - a.id;
+            }
         });
 
         sortedCards.forEach(card => {
@@ -538,7 +689,6 @@
             const levelColor = getLevelColor(card.level);
             const timeText = getTimeUntil(card.nextReview);
 
-            // ✨ 新增的：把詳細解釋印在簡短翻譯跟例句的中間
             let defsHtml = '';
             card.definitions.forEach(def => {
                 const posClass = `pos-${def.pos.replace('.','')}`;
@@ -547,7 +697,7 @@
                         <div class="pos-tag ${posClass}">${def.pos}</div>
                         <div class="def-content">
                             <div class="meaning-text">${def.meaning}</div>
-                            ${def.explanation ? `<div style="font-size:0.9em; color:var(--text-sub); margin-top:4px;">${def.explanation}</div>` : ''}
+                            ${def.explanation ? `<div style="font-size:0.95em; color:var(--text-sub); margin-top:6px; line-height:1.5;">${def.explanation}</div>` : ''}
                             ${def.sentence ? `<div class="sentence-text">${def.sentence}</div>` : ''}
                         </div>
                     </div>
@@ -600,10 +750,17 @@
         }
     }
 
+    // --- 修正後的 SRS 間隔計算 ---
     function calculateNextInterval(level) {
         const oneDay = 24 * 60 * 60 * 1000;
+        
+        // 🛑 關鍵修正：如果是 Level 0 或 Level 1，一律設為 1 天後複習
+        // 這樣就不會發生 Level 0 跑到 default (30天) 的問題
+        if (level <= 1) {
+            return 1 * oneDay;
+        }
+
         switch(level) {
-            case 1: return 1 * oneDay;  
             case 2: return 2 * oneDay;  
             case 3: return 7 * oneDay;  
             case 4: return 15 * oneDay; 
@@ -618,7 +775,7 @@
     let quizTotalCount = 0;
     let selectedTypes = [0, 1, 2, 3, 4]; // 預設全選
 
-    // 1. 開啟測驗視窗，顯示設定畫面
+    // --- 測驗系統 ---
     function startQuiz(mode) {
         currentMode = mode;
         const badgeEl = document.getElementById('quiz-mode-badge');
@@ -635,31 +792,49 @@
             quizQueue = cards.filter(c => Date.now() >= c.nextReview);
             if (quizQueue.length === 0) { alert('太棒了！目前沒有需要複習的單字。'); return; }
             badgeEl.innerText = '🔥 SRS 計分';
-            badgeEl.style.background = 'var(--warning)'; badgeEl.style.color = '#000';
+            badgeEl.style.background = 'var(--warning)'; badgeEl.style.color = 'white';
         } else {
-            quizQueue = [...cards].sort(() => Math.random() - 0.5).slice(0, 20); // 隨機取 20 題
+            quizQueue = [...cards].sort(() => Math.random() - 0.5).slice(0, 20);
             if (quizQueue.length === 0) { alert('單字庫是空的，請先新增單字！'); return; }
             badgeEl.innerText = '🎲 隨機練習';
-            badgeEl.style.background = 'var(--practice)'; badgeEl.style.color = '#fff';
+            badgeEl.style.background = 'var(--practice)'; badgeEl.style.color = 'white';
         }
 
         quizTotalCount = quizQueue.length;
         document.getElementById('quiz-modal').style.display = 'flex';
 
-        // 顯示「題型選擇」畫面 (Checkboxes)
+        // 🟢 介面更新：使用 .quiz-option-label 配合新的 CSS 排版
         bodyEl.innerHTML = `
-            <div style="text-align:left; padding:0 20px;">
-                <p style="color:var(--text-sub); margin-bottom:15px;">本次共有 <strong>${quizTotalCount}</strong> 個單字。請勾選想練習的題型：</p>
-                <label style="display:block; margin-bottom:8px; cursor:pointer;"><input type="checkbox" name="qType" value="0" checked> 英翻中 (單字 -> 中文)</label>
-                <label style="display:block; margin-bottom:8px; cursor:pointer;"><input type="checkbox" name="qType" value="1" checked> 中翻英 (中文 -> 拼字)</label>
-                <label style="display:block; margin-bottom:8px; cursor:pointer;"><input type="checkbox" name="qType" value="2" checked> 填空題 (句子挖空)</label>
-                <label style="display:block; margin-bottom:8px; cursor:pointer;"><input type="checkbox" name="qType" value="3" checked> 聽寫題 (聽音 -> 拼字)</label>
-                <label style="display:block; margin-bottom:8px; cursor:pointer;"><input type="checkbox" name="qType" value="4" checked> 詞性題 (判斷詞性)</label>
+            <div style="text-align:left; padding:0 10px;">
+                <p style="color:var(--text-sub); margin-bottom:15px; text-align:center;">
+                    本次共有 <strong style="color:var(--text-main)">${quizTotalCount}</strong> 個單字。
+                </p>
+                <div style="display:flex; flex-direction:column; align-items:center;">
+                    <label class="quiz-option-label" style="width:100%; max-width:320px;">
+                        <input type="checkbox" name="qType" value="0" checked> 
+                        <span>英翻中 (單字 -> 中文)</span>
+                    </label>
+                    <label class="quiz-option-label" style="width:100%; max-width:320px;">
+                        <input type="checkbox" name="qType" value="1" checked> 
+                        <span>中翻英 (中文 -> 拼字)</span>
+                    </label>
+                    <label class="quiz-option-label" style="width:100%; max-width:320px;">
+                        <input type="checkbox" name="qType" value="2" checked> 
+                        <span>填空題 (句子挖空)</span>
+                    </label>
+                    <label class="quiz-option-label" style="width:100%; max-width:320px;">
+                        <input type="checkbox" name="qType" value="3" checked> 
+                        <span>聽寫題 (聽音 -> 拼字)</span>
+                    </label>
+                    <label class="quiz-option-label" style="width:100%; max-width:320px;">
+                        <input type="checkbox" name="qType" value="4" checked> 
+                        <span>詞性題 (判斷詞性)</span>
+                    </label>
+                </div>
             </div>
-            <button onclick="beginSession()" class="btn btn-primary" style="width:100%; margin-top:20px; font-size:1.2em;">🚀 開始測驗</button>
+            <button onclick="beginSession()" class="btn btn-primary" style="width:100%; margin-top:20px; font-size:1.1em; padding:12px;">🚀 開始測驗</button>
         `;
         
-        // 隱藏原本的關閉按鈕，改由上面的 HTML 控制
         footerEl.innerHTML = '<button onclick="closeQuiz()" class="btn btn-secondary" style="width:100%;">取消</button>';
     }
 
@@ -756,10 +931,18 @@
         }, 100);
     }
 
+    // --- 修正後的答題檢查邏輯 ---
     async function checkAns() {
         const inputEl = document.getElementById('ans-input');
         if (!inputEl) return;
         const input = inputEl.value.trim().toLowerCase();
+        
+        if (input === "") {
+            alert("請輸入答案！不能留白喔。");
+            inputEl.focus();
+            return;
+        }
+
         const card = currentQ.card;
         const def = currentQ.def;
         const type = currentQ.type;
@@ -767,9 +950,8 @@
         let isCorrect = false;
         let correctAnswerMsg = '';
 
-        // 檢查邏輯
         if (type === 0) { 
-            isCorrect = def.meaning.includes(input);
+            isCorrect = input.length > 0 && def.meaning.includes(input);
             correctAnswerMsg = def.meaning;
         } else if (type === 1 || type === 2 || type === 3) { 
             isCorrect = (input === card.word.toLowerCase());
@@ -787,25 +969,27 @@
             fb.innerHTML = '<span style="color:var(--success)">✅ Correct!</span>';
             if (currentMode === 'review') {
                 if(card.level < 9) card.level++;
-                card.nextReview = Date.now() + calculateNextInterval(card.level); 
-                updateCardInBackend(card); // 答對即存檔
+                card.nextReview = getTodayMidnight() + calculateNextInterval(card.level); 
+                updateCardInBackend(card); 
             }
         } else {
             fb.innerHTML = `<span style="color:var(--danger)">❌ Ans: <span style="font-weight:bold">${correctAnswerMsg}</span></span>`;
             if (type !== 0 && type !== 4) speak(card.word); 
             
             if (currentMode === 'review') {
-                // 🛑 懲罰機制修改：答錯時等級減 1 (最低為 0)，而不是直接歸零
-                card.level = Math.max(0, card.level - 1);
-                card.nextReview = Date.now() + calculateNextInterval(card.level); // 根據降級後的 Level 重新計算時間
-                updateCardInBackend(card); // 答錯也存檔
+                // 🛑 關鍵修正：最低等級限制為 1
+                // 答錯時：如果目前是 Lv2 -> 變 Lv1；如果目前是 Lv1 -> 保持 Lv1
+                card.level = Math.max(1, card.level - 1);
                 
-                // 錯題放回隊列重新練習（放到最下面，這次不算分，只是讓你再練一次）
+                // 重新計算複習時間 (Level 1 會對應到 1 天後)
+                card.nextReview = getTodayMidnight() + calculateNextInterval(card.level); 
+                
+                updateCardInBackend(card); 
                 quizQueue.unshift(card); 
             }
         }
         
-        setTimeout(nextQuestion, 2000); // 2秒後下一題
+        setTimeout(nextQuestion, 2000); 
     }
 
     function finishQuiz() {
