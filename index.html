@@ -199,6 +199,58 @@
     .big-speaker-btn { background: var(--text-main); color: #e3e1dd; border: none; border-radius: 50%; width: 100px; height: 100px; font-size: 44px; cursor: pointer; display: flex; align-items: center; justify-content: center; margin: 30px auto; box-shadow: 0 10px 25px rgba(0,0,0, 0.2); transition: transform 0.2s; }
     .big-speaker-btn:active { transform: scale(0.95); }
 
+    /* --- 側邊懸浮工具箱 (Responsive Sidebar) --- */
+    /* 預設 (手機/平板)：保持原本的橫向排列 */
+    .sort-toolbar {
+        display: flex; justify-content: flex-end; align-items: center; gap: 10px;
+        margin-bottom: 20px; padding: 10px;
+        background: rgba(0,0,0,0.03); border-radius: 8px;
+    }
+
+    /* 🖥️ 電腦版：變身為右側懸浮面板 */
+    @media (min-width: 1250px) {
+        .sort-toolbar {
+            position: fixed;
+            top: 150px;           /* 距離頂部的高度 */
+            left: 50%;            /* 從螢幕正中間開始算 */
+            margin-left: 470px;   /* 往右推 470px (主內容 900px/2 = 450 + 20px 間距) */
+            
+            width: 220px;         /* 側邊欄寬度 */
+            flex-direction: column; /* 改為垂直排列 */
+            align-items: stretch; 
+            
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-md);
+            padding: 24px;
+            border-radius: 16px;
+            z-index: 100;         /* 確保浮在最上層 */
+            gap: 15px;
+        }
+
+        /* 加一個帥氣的標題 */
+        .sort-toolbar::before {
+            content: "🔧 工具箱";
+            font-size: 1.1em;
+            font-weight: 800;
+            color: var(--primary);
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--border-color);
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        /* 隱藏原本的 "排序方式：" 文字，因為有標題了 */
+        .sort-toolbar label { display: none; }
+        
+        /* 讓下拉選單和按鈕佔滿寬度 */
+        .sort-select, .sort-toolbar .btn {
+            width: 100%;
+            background: var(--input-bg);
+            border: 1px solid transparent;
+        }
+        .sort-select:hover { background: white; border-color: var(--border-color); }
+    }
 
 </style>
 </head>
@@ -236,22 +288,21 @@
     <div class="container" style="background:transparent; border:none; box-shadow:none; padding:0;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
             <h2 style="margin:0; border:none; color:var(--text-main);">🗂️ 雲端字庫 (<span id="total-count" style="color:var(--primary);">0</span>)</h2>
-            <div style="display:flex; gap:10px;">
-                <button onclick="startQuiz('practice')" class="btn btn-success" style="font-size:13px;" title="不影響複習進度，純練手感">🎲 隨機刷題</button>
             </div>
-        </div>
 
         <div class="sort-toolbar">
-        <label style="font-size:13px; color:var(--text-sub); font-weight:600;">排序方式：</label>
-        <select id="sort-mode" class="sort-select" onchange="renderCards()">
-            <option value="review-asc">⏳ 複習時間 (由近到遠)</option>
-            <option value="review-desc">📅 複習時間 (由遠到近)</option>
-            <option value="level-asc">🌱 等級 (由低到高)</option>
-            <option value="level-desc">🌳 等級 (由高到低)</option>
-            <option value="alpha-asc">🔤 字母順序 (A-Z)</option>
-            <option value="alpha-desc">🔤 字母順序 (Z-A)</option>
-        </select>
-    </div>
+            <button onclick="startQuiz('practice')" class="btn btn-success" style="font-size:13px; justify-content:center;">🎲 隨機刷題</button>
+            
+            <label style="font-size:13px; color:var(--text-sub); font-weight:600;">排序方式：</label>
+            <select id="sort-mode" class="sort-select" onchange="renderCards()">
+                <option value="review-asc">⏳ 複習時間 (由近到遠)</option>
+                <option value="review-desc">📅 複習時間 (由遠到近)</option>
+                <option value="level-asc">🌱 等級 (由低到高)</option>
+                <option value="level-desc">🌳 等級 (由高到低)</option>
+                <option value="alpha-asc">🔤 字母順序 (A-Z)</option>
+                <option value="alpha-desc">🔤 字母順序 (Z-A)</option>
+            </select>
+        </div>
         
         <div id="card-list"></div>
     </div>
@@ -332,48 +383,58 @@
     // --- 雲端資料操作 (CRUD) ---
     // --- 升級版：SWR 雙重載入機制 (LocalStorage + 雲端同步) ---
     // --- 雲端資料操作 (CRUD) ---
+    // --- 雲端資料操作 (CRUD) ---
     async function loadWordsFromAPI() {
         const loadingIndicator = document.getElementById('loading-indicator'); 
         if (loadingIndicator) loadingIndicator.style.display = 'block';
 
+        // 🛠️ 抽離出來的「資料修復中心」：不管資料從哪來，都先洗乾淨
+        const cleanData = (dataList) => {
+            const now = Date.now();
+            const oneDay = 24 * 60 * 60 * 1000;
+            return dataList.map(c => {
+                let safeReview = c.nextReview || now;
+                
+                // 🛑 強力修正：如果是 Level 0 或 1 (或根本沒等級)，且時間跑到明天以後
+                // 強制把它拉回「現在」，直接打破 29D 或 27M 的迴圈
+                if ((c.level === undefined || c.level <= 1) && (safeReview - now > oneDay)) {
+                    console.warn(`自動修復單字時間異常: ${c.word}`);
+                    safeReview = now; 
+                }
+                
+                return { ...c, nextReview: safeReview };
+            });
+        };
+
+        // 🌟 步驟一：先從瀏覽器 LocalStorage 挖出歷史備份
         const cachedData = localStorage.getItem('vocab_cache_data');
         if (cachedData) {
             try {
-                cards = JSON.parse(cachedData);
+                let parsedCache = JSON.parse(cachedData);
+                // 快取拿出來的資料也要洗過！避免一開網頁先看到錯誤時間
+                cards = cleanData(parsedCache); 
                 checkReview(); 
                 updateCount(); 
+                renderCards(); // 確保一開始載入快取就有套用排序
                 console.log("⚡ 瞬間載入本機快取！");
             } catch (e) {
                 console.error("快取解析失敗，忽略快取", e);
             }
         }
 
+        // ☁️ 步驟二：背景默默向 Render 雲端伺服器請求最新資料
         try {
             const response = await fetch(API_BASE_URL);
             if (response.ok) {
                 const freshCards = await response.json();
                 
-                // 🛑 自動資料修復邏輯 (Data Cleansing) 🛑
-                // 這裡會檢查每一個從伺服器抓回來的單字
-                cards = freshCards.map(c => {
-                    let safeReview = c.nextReview || Date.now();
-                    const oneDay = 24 * 60 * 60 * 1000;
-                    
-                    // 修正 Bug：如果 Level 是 0 (或 1)，但下次複習時間卻超過 24 小時後
-                    // 表示這是舊邏輯產生的髒資料，強制把它重設為「現在」
-                    if (c.level <= 1 && (safeReview - Date.now() > oneDay)) {
-                        console.warn(`自動修復單字時間異常: ${c.word}`);
-                        safeReview = Date.now(); 
-                    }
-
-                    return {
-                        ...c,
-                        nextReview: safeReview
-                    };
-                });
+                // 🛑 把從伺服器抓下來的資料也洗乾淨 🛑
+                cards = cleanData(freshCards);
                 
-                // 將修復後的乾淨資料存回快取，這樣下次載入就不會再錯了
+                // 將修復後的乾淨資料轉為字串
                 const cleanDataString = JSON.stringify(cards);
+                
+                // 如果洗乾淨的雲端資料跟快取「不一樣」，才重新渲染畫面並更新快取
                 if (cleanDataString !== cachedData) {
                     checkReview();
                     updateCount();
@@ -625,15 +686,21 @@
         const hue = Math.min(level, 9) * 13; 
         return `hsl(${hue}, 80%, 60%)`; 
     }
+    // --- 時間顯示優化：強制以「天」為單位 ---
+    // --- 時間顯示修正：強制以「天」為單位 (無條件進位) ---
     function getTimeUntil(timestamp) {
         const diff = timestamp - Date.now();
+        
+        // 如果時間已過，顯示 Review Now!
         if (diff <= 0) return "Review Now!";
-        const minutes = Math.floor(diff / 60000);
-        const hours = Math.floor(minutes / 60);
-        const days = Math.floor(hours / 24);
-        if (days > 0) return `in ${days}d`;
-        if (hours > 0) return `in ${hours}h`;
-        return `in ${minutes}m`;
+
+        // 🟢 關鍵修改：
+        // 舊的程式碼有算出 minutes 和 hours，這裡我們全部拿掉。
+        // 直接算出天數，並用 Math.ceil (無條件進位)。
+        // 這樣就算是剩 1 分鐘，也會顯示 "in 1d" (代表在 1 天內到期)，不會顯示 "27M"。
+        const days = Math.ceil(diff / (24 * 60 * 60 * 1000));
+        
+        return `in ${days}d`;
     }
 
     // --- 渲染卡片 (含排序邏輯) ---
