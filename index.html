@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vocab Master v7.1 (Cloud Sync Edition)</title>
+    <script src="https://cdn.jsdelivr.net/npm/ts-fsrs@3.5.5/dist/ts-fsrs.iife.js"></script>
     <style>
     :root {
         /* 🎨 深燕麥極簡風 (Darker Oatmeal / Warm Stone) */
@@ -999,7 +1000,7 @@
     }
 
     // --- 修正後的答題檢查邏輯 ---
-    async function checkAns() {
+        async function checkAns() {
         const inputEl = document.getElementById('ans-input');
         if (!inputEl) return;
         const input = inputEl.value.trim().toLowerCase();
@@ -1017,8 +1018,13 @@
         let isCorrect = false;
         let correctAnswerMsg = '';
 
+        // 💡 升級：多重詞義與切割比對 (解決死板改錯的問題)
         if (type === 0) { 
-            isCorrect = input.length > 0 && def.meaning.includes(input);
+            // 將「蘋果, 蘋果樹 / 某種東西」切開，變成陣列 ['蘋果', '蘋果樹', '某種東西']
+            const possibleAnswers = def.meaning.split(/[,、/|]/).map(s => s.trim().toLowerCase());
+            
+            // 只要你的輸入包含在任一答案內，或是答案包含在你的輸入內，就算對！
+            isCorrect = possibleAnswers.some(ans => ans.includes(input) || input.includes(ans));
             correctAnswerMsg = def.meaning;
         } else if (type === 1 || type === 2 || type === 3) { 
             isCorrect = (input === card.word.toLowerCase());
@@ -1030,33 +1036,111 @@
             correctAnswerMsg = def.pos;
         }
 
-        const fb = document.getElementById('quiz-feedback');
-        
+        // 隱藏原本的送出按鈕與輸入框
+        const submitBtn = document.querySelector('button[onclick="checkAns()"]');
+        if (submitBtn) submitBtn.style.display = 'none';
+        inputEl.disabled = true;
+
+        // 呼叫對應的選項面板
         if (isCorrect) {
-            fb.innerHTML = '<span style="color:var(--success)">✅ Correct!</span>';
-            if (currentMode === 'review') {
-                if(card.level < 9) card.level++;
-                card.nextReview = getTodayMidnight() + calculateNextInterval(card.level); 
-                updateCardInBackend(card); 
-            }
+            showCorrectOptions();
         } else {
-            fb.innerHTML = `<span style="color:var(--danger)">❌ Ans: <span style="font-weight:bold">${correctAnswerMsg}</span></span>`;
-            if (type !== 0 && type !== 4) speak(card.word); 
-            
-            if (currentMode === 'review') {
-                // 🛑 關鍵修正：最低等級限制為 1
-                // 答錯時：如果目前是 Lv2 -> 變 Lv1；如果目前是 Lv1 -> 保持 Lv1
-                card.level = Math.max(1, card.level - 1);
-                
-                // 重新計算複習時間 (Level 1 會對應到 1 天後)
-                card.nextReview = getTodayMidnight() + calculateNextInterval(card.level); 
-                
-                updateCardInBackend(card); 
-                quizQueue.unshift(card); 
-            }
+            showWrongOptions(correctAnswerMsg);
+        }
+    }
+
+    // 🟩 答對時的 FSRS 選項面板
+    function showCorrectOptions() {
+        const fb = document.getElementById('quiz-feedback');
+        if (currentMode === 'review') {
+            fb.innerHTML = `
+                <div style="color:var(--success); font-weight:bold; margin-bottom:10px; font-size:1.1em;">✅ 正確！你覺得這題多難？</div>
+                <div style="display:flex; gap:10px; justify-content:center;">
+                    <button class="btn" onclick="gradeCard('Hard')" style="flex:1; background:#f59e0b; color:#fff;">困難 (Hard)</button>
+                    <button class="btn btn-success" onclick="gradeCard('Good')" style="flex:1;">良好 (Good)</button>
+                    <button class="btn btn-primary" onclick="gradeCard('Easy')" style="flex:1;">簡單 (Easy)</button>
+                </div>
+            `;
+        } else {
+            fb.innerHTML = '<span style="color:var(--success); font-weight:bold; font-size:1.1em;">✅ Correct!</span>';
+            setTimeout(nextQuestion, 1000); 
+        }
+    }
+
+    // 🟥 答錯時的選項面板 (+算我對)
+    function showWrongOptions(correctMsg) {
+        const fb = document.getElementById('quiz-feedback');
+        const type = currentQ.type;
+        const card = currentQ.card;
+        
+        if (type !== 0 && type !== 4) speak(card.word); 
+
+        if (currentMode === 'review') {
+            fb.innerHTML = `
+                <div style="color:var(--danger); margin-bottom:10px; font-size:1.1em;">❌ 答案是：<span style="font-weight:bold">${correctMsg}</span></div>
+                <div style="display:flex; gap:10px; justify-content:center;">
+                    <button class="btn btn-danger" onclick="gradeCard('Again')" style="flex:1;">記錯了 (Again)</button>
+                    <button class="btn" onclick="overrideCorrect()" style="flex:1; background:var(--input-bg); color:var(--text-main); border:1px solid var(--border-color);">😎 算我對</button>
+                </div>
+            `;
+        } else {
+            fb.innerHTML = `<span style="color:var(--danger); font-size:1.1em;">❌ 答案是：<span style="font-weight:bold">${correctMsg}</span></span>`;
+            setTimeout(nextQuestion, 2000);
+        }
+    }
+
+    // 😎 算我對 (Override) 按鈕觸發
+    function overrideCorrect() {
+        showCorrectOptions();
+    }
+
+    // 🧠 FSRS 演算法計分與資料回傳
+    function gradeCard(ratingStr) {
+        const card = currentQ.card;
+        
+        // 初始化 FSRS (來自我們在 Head 引入的套件)
+        const f = new tsfsrs.FSRS();
+        
+        // 將我們卡片的資料轉成 FSRS 看得懂的格式
+        const fCard = {
+            due: new Date(card.nextReview || Date.now()),
+            stability: card.stability || 0,
+            difficulty: card.difficulty || 0,
+            elapsed_days: card.elapsed_days || 0,
+            scheduled_days: card.scheduled_days || 0,
+            reps: card.reps || 0,
+            lapses: card.lapses || 0,
+            state: card.state || 0
+        };
+
+        // 1=Again, 2=Hard, 3=Good, 4=Easy
+        const ratingDict = { 'Again': 1, 'Hard': 2, 'Good': 3, 'Easy': 4 };
+        const rating = ratingDict[ratingStr];
+
+        // 進行魔法計算
+        const schedulingCards = f.repeat(fCard, new Date());
+        const newFSRSData = schedulingCards[rating].card;
+
+        // 將算好的新數據存回我們的單字卡
+        card.nextReview = newFSRSData.due.getTime();
+        card.stability = newFSRSData.stability;
+        card.difficulty = newFSRSData.difficulty;
+        card.elapsed_days = newFSRSData.elapsed_days;
+        card.scheduled_days = newFSRSData.scheduled_days;
+        card.reps = newFSRSData.reps;
+        card.lapses = newFSRSData.lapses;
+        card.state = newFSRSData.state;
+
+        // 存入資料庫
+        updateCardInBackend(card);
+
+        // 如果是選 Again (答錯)，把卡片放回列隊最前面，等一下再考一次
+        if (ratingStr === 'Again') {
+            quizQueue.unshift(card);
         }
         
-        setTimeout(nextQuestion, 2000); 
+        // 進入下一題
+        nextQuestion();
     }
 
     function finishQuiz() {
