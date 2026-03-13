@@ -4,7 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vocab Master v7.1 (Cloud Sync Edition)</title>
-    <script src="https://cdn.jsdelivr.net/npm/ts-fsrs@3.5.5/dist/ts-fsrs.iife.js"></script>
+    <script type="module">
+        import { FSRS } from 'https://cdn.jsdelivr.net/npm/ts-fsrs@3.5.5/dist/ts-fsrs.mjs';
+        // 載入後，把它綁定在 window 上，這樣你的所有按鈕才抓得到它！
+        window.myFSRS = new FSRS();
+    </script>
     <style>
     :root {
         /* 🎨 深燕麥極簡風 (Darker Oatmeal / Warm Stone) */
@@ -1095,52 +1099,63 @@
     }
 
     // 🧠 FSRS 演算法計分與資料回傳
+    // 🧠 FSRS 演算法計分與資料回傳 (防呆升級版)
+    // 🧠 FSRS 演算法計分與資料回傳 (最終穩定版)
     function gradeCard(ratingStr) {
-        const card = currentQ.card;
-        
-        // 初始化 FSRS (來自我們在 Head 引入的套件)
-        const f = new tsfsrs.FSRS();
-        
-        // 將我們卡片的資料轉成 FSRS 看得懂的格式
-        const fCard = {
-            due: new Date(card.nextReview || Date.now()),
-            stability: card.stability || 0,
-            difficulty: card.difficulty || 0,
-            elapsed_days: card.elapsed_days || 0,
-            scheduled_days: card.scheduled_days || 0,
-            reps: card.reps || 0,
-            lapses: card.lapses || 0,
-            state: card.state || 0
-        };
+        try {
+            // 1. 檢查演算法是否載入成功
+            if (!window.myFSRS) {
+                alert("⚠️ 系統正在載入演算法，請等一秒鐘後再按一次！");
+                return;
+            }
 
-        // 1=Again, 2=Hard, 3=Good, 4=Easy
-        const ratingDict = { 'Again': 1, 'Hard': 2, 'Good': 3, 'Easy': 4 };
-        const rating = ratingDict[ratingStr];
+            const card = currentQ.card;
+            const f = window.myFSRS; // 🌟 直接使用我們綁定好的演算法引擎
+            
+            // 2. 建立標準的 FSRS 卡片格式
+            let fCard = {
+                due: new Date(card.nextReview || Date.now()),
+                stability: card.stability || 0,
+                difficulty: card.difficulty || 0,
+                elapsed_days: card.elapsed_days || 0,
+                scheduled_days: card.scheduled_days || 0,
+                reps: card.reps || 0,
+                lapses: card.lapses || 0,
+                state: card.state || 0
+            };
 
-        // 進行魔法計算
-        const schedulingCards = f.repeat(fCard, new Date());
-        const newFSRSData = schedulingCards[rating].card;
+            const ratingDict = { 'Again': 1, 'Hard': 2, 'Good': 3, 'Easy': 4 };
+            const rating = ratingDict[ratingStr];
 
-        // 將算好的新數據存回我們的單字卡
-        card.nextReview = newFSRSData.due.getTime();
-        card.stability = newFSRSData.stability;
-        card.difficulty = newFSRSData.difficulty;
-        card.elapsed_days = newFSRSData.elapsed_days;
-        card.scheduled_days = newFSRSData.scheduled_days;
-        card.reps = newFSRSData.reps;
-        card.lapses = newFSRSData.lapses;
-        card.state = newFSRSData.state;
+            // 3. 進行 FSRS 魔法計算
+            const schedulingCards = f.repeat(fCard, new Date());
+            const newFSRSData = schedulingCards[rating].card;
 
-        // 存入資料庫
-        updateCardInBackend(card);
+            // 4. 將算好的新數據存回我們的單字卡
+            card.nextReview = newFSRSData.due.getTime();
+            card.stability = newFSRSData.stability;
+            card.difficulty = newFSRSData.difficulty;
+            card.elapsed_days = newFSRSData.elapsed_days;
+            card.scheduled_days = newFSRSData.scheduled_days;
+            card.reps = newFSRSData.reps;
+            card.lapses = newFSRSData.lapses;
+            card.state = newFSRSData.state;
 
-        // 如果是選 Again (答錯)，把卡片放回列隊最前面，等一下再考一次
-        if (ratingStr === 'Again') {
-            quizQueue.unshift(card);
+            // 5. 存入資料庫
+            updateCardInBackend(card);
+
+            // 6. 如果是選 Again (答錯)，把卡片放回列隊最前面，等下再練一次
+            if (ratingStr === 'Again') {
+                quizQueue.unshift(card);
+            }
+            
+            // 7. 進入下一題
+            nextQuestion();
+
+        } catch (error) {
+            console.error("FSRS 計算錯誤:", error);
+            alert("計分發生錯誤！錯誤訊息：" + error.message);
         }
-        
-        // 進入下一題
-        nextQuestion();
     }
 
     function finishQuiz() {
