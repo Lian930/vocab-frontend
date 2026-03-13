@@ -5,10 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vocab Master v7.1 (Cloud Sync Edition)</title>
     <script type="module">
-        import { FSRS } from 'https://cdn.jsdelivr.net/npm/ts-fsrs@3.5.5/dist/ts-fsrs.mjs';
-        // 載入後，把它綁定在 window 上，這樣你的所有按鈕才抓得到它！
+        import { FSRS } from 'https://esm.sh/ts-fsrs@3.5.5';
         window.myFSRS = new FSRS();
+        console.log("✅ FSRS 演算法載入成功！");
     </script>
+</head>
     <style>
     :root {
         /* 🎨 深燕麥極簡風 (Darker Oatmeal / Warm Stone) */
