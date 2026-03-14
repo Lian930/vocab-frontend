@@ -1102,18 +1102,20 @@
     // 🧠 FSRS 演算法計分與資料回傳
     // 🧠 FSRS 演算法計分與資料回傳 (防呆升級版)
     // 🧠 FSRS 演算法計分與資料回傳 (最終穩定版)
-    function gradeCard(ratingStr) {
+    // 🧠 FSRS 演算法計分與資料回傳 (終極無敵動態載入版)
+    async function gradeCard(ratingStr) {
+        // 按下去的瞬間，先讓所有按鈕反灰，防止你不小心連點兩下
+        const btns = document.querySelectorAll('#quiz-feedback button');
+        btns.forEach(b => b.disabled = true);
+        
         try {
-            // 1. 檢查演算法是否載入成功
-            if (!window.myFSRS) {
-                alert("⚠️ 系統正在載入演算法，請等一秒鐘後再按一次！");
-                return;
-            }
-
-            const card = currentQ.card;
-            const f = window.myFSRS; // 🌟 直接使用我們綁定好的演算法引擎
+            // 🌟 終極殺手鐧：按鈕點下去時才「動態載入」演算法，100% 保證不會抓不到！
+            const { FSRS } = await import('https://esm.sh/ts-fsrs@3.5.5');
+            const f = new FSRS();
             
-            // 2. 建立標準的 FSRS 卡片格式
+            const card = currentQ.card;
+            
+            // 建立標準的 FSRS 卡片格式
             let fCard = {
                 due: new Date(card.nextReview || Date.now()),
                 stability: card.stability || 0,
@@ -1128,11 +1130,11 @@
             const ratingDict = { 'Again': 1, 'Hard': 2, 'Good': 3, 'Easy': 4 };
             const rating = ratingDict[ratingStr];
 
-            // 3. 進行 FSRS 魔法計算
+            // 進行 FSRS 魔法計算
             const schedulingCards = f.repeat(fCard, new Date());
             const newFSRSData = schedulingCards[rating].card;
 
-            // 4. 將算好的新數據存回我們的單字卡
+            // 將算好的新數據存回我們的單字卡
             card.nextReview = newFSRSData.due.getTime();
             card.stability = newFSRSData.stability;
             card.difficulty = newFSRSData.difficulty;
@@ -1142,20 +1144,21 @@
             card.lapses = newFSRSData.lapses;
             card.state = newFSRSData.state;
 
-            // 5. 存入資料庫
+            // 存入後端資料庫
             updateCardInBackend(card);
 
-            // 6. 如果是選 Again (答錯)，把卡片放回列隊最前面，等下再練一次
+            // 如果是選 Again (答錯)，把卡片放回列隊最前面，等下再練一次
             if (ratingStr === 'Again') {
                 quizQueue.unshift(card);
             }
             
-            // 7. 進入下一題
+            // 進入下一題
             nextQuestion();
 
         } catch (error) {
             console.error("FSRS 計算錯誤:", error);
-            alert("計分發生錯誤！錯誤訊息：" + error.message);
+            alert("演算法載入失敗！請確認網路有連線喔。\n錯誤訊息：" + error.message);
+            btns.forEach(b => b.disabled = false); // 如果失敗了，把按鈕恢復讓你重按
         }
     }
 
