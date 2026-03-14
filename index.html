@@ -4,7 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vocab Master v7.1 (Cloud Sync Edition)</title>
-    <script src="https://cdn.jsdelivr.net/npm/ts-fsrs@3.5.5/dist/ts-fsrs.iife.js"></script>
+    <script type="module">
+        import { FSRS } from 'https://cdn.jsdelivr.net/npm/ts-fsrs@3.5.5/+esm';
+        // 載入後，我們自己把它取名叫 FSRS_Engine！
+        window.FSRS_Engine = new FSRS();
+        console.log("✅ 演算法引擎綁定成功！");
+    </script>
 </head>
     <style>
     :root {
@@ -1100,21 +1105,22 @@
     // 🧠 FSRS 演算法計分與資料回傳 (最終穩定版)
     // 🧠 FSRS 演算法計分與資料回傳 (終極無敵動態載入版)
     // 🧠 FSRS 演算法計分與資料回傳 (Brave 瀏覽器相容版)
+    // 🧠 FSRS 演算法計分與資料回傳 (終極 ESM 穩定版)
     function gradeCard(ratingStr) {
         // 先讓所有按鈕反灰，防止連點
         const btns = document.querySelectorAll('#quiz-feedback button');
         btns.forEach(b => b.disabled = true);
         
         try {
-            // 🌟 關鍵真相：套件的全域變數叫做 fsrs，不是 tsfsrs！
-            if (typeof fsrs === 'undefined') {
-                alert("⚠️ 演算法尚未載入，如果你使用 Brave 瀏覽器，請試著關閉右上角的獅子盾牌再試一次！");
+            // 🌟 呼叫我們自己命名的演算法引擎
+            if (!window.FSRS_Engine) {
+                alert("⚠️ 演算法正在載入中，請稍等一秒鐘再按！");
                 btns.forEach(b => b.disabled = false);
                 return;
             }
 
             const card = currentQ.card;
-            const f = new fsrs.FSRS(); // 正確呼叫 fsrs
+            const f = window.FSRS_Engine; 
             
             let fCard = {
                 due: new Date(card.nextReview || Date.now()),
