@@ -4,11 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vocab Master v7.1 (Cloud Sync Edition)</title>
-    <script type="module">
-        import { FSRS } from 'https://esm.sh/ts-fsrs@3.5.5';
-        window.myFSRS = new FSRS();
-        console.log("✅ FSRS 演算法載入成功！");
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/ts-fsrs@3.5.5/dist/ts-fsrs.iife.js"></script>
 </head>
     <style>
     :root {
@@ -1103,19 +1099,23 @@
     // 🧠 FSRS 演算法計分與資料回傳 (防呆升級版)
     // 🧠 FSRS 演算法計分與資料回傳 (最終穩定版)
     // 🧠 FSRS 演算法計分與資料回傳 (終極無敵動態載入版)
-    async function gradeCard(ratingStr) {
-        // 按下去的瞬間，先讓所有按鈕反灰，防止你不小心連點兩下
+    // 🧠 FSRS 演算法計分與資料回傳 (Brave 瀏覽器相容版)
+    function gradeCard(ratingStr) {
+        // 先讓所有按鈕反灰，防止連點
         const btns = document.querySelectorAll('#quiz-feedback button');
         btns.forEach(b => b.disabled = true);
         
         try {
-            // 🌟 終極殺手鐧：按鈕點下去時才「動態載入」演算法，100% 保證不會抓不到！
-            const { FSRS } = await import('https://esm.sh/ts-fsrs@3.5.5');
-            const f = new FSRS();
-            
+            // 🌟 關鍵真相：套件的全域變數叫做 fsrs，不是 tsfsrs！
+            if (typeof fsrs === 'undefined') {
+                alert("⚠️ 演算法尚未載入，如果你使用 Brave 瀏覽器，請試著關閉右上角的獅子盾牌再試一次！");
+                btns.forEach(b => b.disabled = false);
+                return;
+            }
+
             const card = currentQ.card;
+            const f = new fsrs.FSRS(); // 正確呼叫 fsrs
             
-            // 建立標準的 FSRS 卡片格式
             let fCard = {
                 due: new Date(card.nextReview || Date.now()),
                 stability: card.stability || 0,
@@ -1130,11 +1130,11 @@
             const ratingDict = { 'Again': 1, 'Hard': 2, 'Good': 3, 'Easy': 4 };
             const rating = ratingDict[ratingStr];
 
-            // 進行 FSRS 魔法計算
+            // 計算新數據
             const schedulingCards = f.repeat(fCard, new Date());
             const newFSRSData = schedulingCards[rating].card;
 
-            // 將算好的新數據存回我們的單字卡
+            // 寫回卡片
             card.nextReview = newFSRSData.due.getTime();
             card.stability = newFSRSData.stability;
             card.difficulty = newFSRSData.difficulty;
@@ -1144,21 +1144,18 @@
             card.lapses = newFSRSData.lapses;
             card.state = newFSRSData.state;
 
-            // 存入後端資料庫
             updateCardInBackend(card);
 
-            // 如果是選 Again (答錯)，把卡片放回列隊最前面，等下再練一次
             if (ratingStr === 'Again') {
                 quizQueue.unshift(card);
             }
             
-            // 進入下一題
             nextQuestion();
 
         } catch (error) {
             console.error("FSRS 計算錯誤:", error);
-            alert("演算法載入失敗！請確認網路有連線喔。\n錯誤訊息：" + error.message);
-            btns.forEach(b => b.disabled = false); // 如果失敗了，把按鈕恢復讓你重按
+            alert("計分發生錯誤！錯誤訊息：" + error.message);
+            btns.forEach(b => b.disabled = false); 
         }
     }
 
