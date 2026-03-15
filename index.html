@@ -295,6 +295,10 @@
     <div class="container" style="background:transparent; border:none; box-shadow:none; padding:0;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
             <h2 style="margin:0; border:none; color:var(--text-main);">🗂️ 雲端字庫 (<span id="total-count" style="color:var(--primary);">0</span>)</h2>
+
+            <button onclick="bulkDeleteWords()" class="btn btn-danger" id="bulk-delete-btn" style="display: none; box-shadow: var(--shadow-md);">
+                🗑️ 刪除選取的單字
+            </button>
             </div>
 
         <div class="sort-toolbar">
@@ -781,6 +785,8 @@
             // 將 onClick 裡的 card.id 包上引號，防止字串 ID 造成語法錯誤
             el.innerHTML = `
                 <div class="card-header">
+                    <input type="checkbox" class="word-checkbox" value="${card.id}" onchange="toggleBulkDeleteBtn()" style="transform: scale(1.3); margin-right: 15px; cursor: pointer; accent-color: var(--danger);">
+                    
                     <div style="display:flex; align-items:center;">
                         <span class="word-title">${card.word}</span>
                         <span class="word-ipa">${card.ipa}</span>
@@ -800,9 +806,7 @@
                 <div class="level-bar-container">
                     <div class="level-bar-fill" style="width:${progressPercent}%; background-color:${levelColor};"></div>
                 </div>
-            `;
-            list.appendChild(el);
-        });
+            `;});
     }
 
     // --- SRS 演算法 ---
@@ -1202,6 +1206,53 @@
         addDefinitionInput('definitions-container'); 
     }
 
+        // 當勾選框狀態改變時，計算有幾個被勾選，並決定要不要顯示刪除按鈕
+    function toggleBulkDeleteBtn() {
+        const checkedBoxes = document.querySelectorAll('.word-checkbox:checked');
+        const btn = document.getElementById('bulk-delete-btn');
+        
+        if (checkedBoxes.length > 0) {
+            btn.style.display = 'inline-block';
+            btn.innerText = `🗑️ 刪除選取的單字 (${checkedBoxes.length})`;
+        } else {
+            btn.style.display = 'none';
+        }
+    }
+
+    // 執行批次刪除
+    async function bulkDeleteWords() {
+        // 1. 抓出所有被勾選的 checkbox，並把把它們的 value (單字 ID) 蒐集進陣列
+        const checkboxes = document.querySelectorAll('.word-checkbox:checked');
+        const idsToDelete = Array.from(checkboxes).map(cb => cb.value);
+
+        if (idsToDelete.length === 0) return;
+        
+        // 2. 防呆警告
+        if (!confirm(`確定要將這 ${idsToDelete.length} 個單字永久刪除嗎？這無法復原喔！`)) {
+            return; 
+        }
+
+        try {
+            // 3. 把 ID 陣列送給我們剛剛寫的 FastAPI 後端
+            // 注意：這裡的 API 網址要對應你原本的設計，如果是接 /api/words/bulk-delete
+            const response = await fetch(`${API_BASE_URL}/bulk-delete`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ids: idsToDelete })
+            });
+            
+            const data = await response.json();
+            alert(data.message);
+            
+            // 4. 刪除成功後，重新整理列表並隱藏按鈕
+            loadWordsFromAPI(); 
+            toggleBulkDeleteBtn();
+            
+        } catch (error) {
+            console.error("批次刪除失敗:", error);
+            alert("刪除失敗，請檢查網路連線或 Console 紀錄！");
+        }
+    }
     
 </script>
 </body>
