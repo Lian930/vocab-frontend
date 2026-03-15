@@ -5,8 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vocab Master v7.1 (Cloud Sync Edition)</title>
    <script type="module">
-        import { FSRS } from 'https://cdn.skypack.dev/ts-fsrs@3.5.5';
-        window.FSRS_Engine = FSRS; // 直接綁定引擎
+        import * as tsFsrs from 'https://cdn.jsdelivr.net/npm/ts-fsrs@latest/+esm';
+        // 直接把 FSRS 類別綁定給引擎
+        window.FSRS_Engine = tsFsrs.FSRS;
+        console.log("✅ FSRS 演算法引擎終於掛載成功啦！");
     </script>
 </head>
     <style>
