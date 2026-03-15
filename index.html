@@ -783,14 +783,16 @@
 
                 el.innerHTML = `
                     <div class="card-header">
-                        
-                        <div style="display:flex; align-items:center;">
-                            <input type="checkbox" class="word-checkbox" value="${card.id}" onchange="toggleBulkDeleteBtn()" style="transform: scale(1.3); margin-right: 15px; cursor: pointer; accent-color: var(--danger);">
-                            <span class="word-title">${card.word}</span>
-                            <span class="word-ipa">${card.ipa || ''}</span>
+                        <div style="display:flex; align-items:center; gap:15px; flex:1; min-width:0;">
+                            <input type="checkbox" class="word-checkbox" value="${card.id}" onchange="toggleBulkDeleteBtn()" style="transform: scale(1.3); cursor: pointer; accent-color: var(--danger); margin:0; flex-shrink:0;">
+                            <span class="word-title" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${card.word}</span>
+                            
+                            ${card.ipa ? `<span class="word-ipa" style="white-space: nowrap; flex-shrink:0;">${card.ipa}</span>` : ''}
                         </div>
-                        <span class="timer-badge ${isDue ? 'timer-due' : ''}">${timeText}</span>
-                        <div style="display:flex; align-items:center; gap:10px; margin-left:10px;">
+                        
+                        <span class="timer-badge ${isDue ? 'timer-due' : ''}" style="margin-left:auto;">${timeText}</span>
+                        
+                        <div style="display:flex; align-items:center; gap:10px; margin-left:15px;">
                             <span class="level-badge" style="color:${levelColor}; border-color:${levelColor}">Lv.${lvl}</span>
                             <div style="display:flex; gap:6px;">
                                 <button class="btn btn-secondary btn-icon" onclick="speak('${card.word}')">🔊</button>
