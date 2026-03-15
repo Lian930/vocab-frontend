@@ -5,11 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vocab Master v7.1 (Cloud Sync Edition)</title>
    <script type="module">
-        // 把整個模組抓下來，命名為 tsFsrs
-        import * as tsFsrs from 'https://cdn.jsdelivr.net/npm/ts-fsrs@3.5.5/+esm';
-        // 把它綁定到全域變數 window 上，讓底下的按鈕都能用到
-        window.tsfsrs = tsFsrs;
-        console.log("✅ FSRS 演算法模組掛載成功！", window.tsfsrs);
+        import { FSRS } from 'https://cdn.skypack.dev/ts-fsrs@3.5.5';
+        window.FSRS_Engine = FSRS; // 直接綁定引擎
     </script>
 </head>
     <style>
@@ -1108,21 +1105,21 @@
     // 🧠 FSRS 演算法計分與資料回傳 (Brave 瀏覽器相容版)
     // 🧠 FSRS 演算法計分與資料回傳 (終極 ESM 穩定版)
     // 🧠 FSRS 演算法計分與資料回傳 (官方範例修正版)
+    // 🧠 FSRS 演算法計分與資料回傳 (無敵版)
     function gradeCard(ratingStr) {
-        // 先讓所有按鈕反灰，防止連點
         const btns = document.querySelectorAll('#quiz-feedback button');
         btns.forEach(b => b.disabled = true);
         
         try {
-            // 🌟 檢查剛剛掛載的 window.tsfsrs 是否存在
-            if (!window.tsfsrs || !window.tsfsrs.FSRS) {
-                alert("⚠️ 演算法尚未載入，請稍等一秒鐘再按！");
+            // 🌟 如果找不到引擎，通常是被瀏覽器快取陰了
+            if (!window.FSRS_Engine) {
+                alert("⚠️ 快取作祟！請在網址列後面加上 ?v=1 重新整理網頁！");
                 btns.forEach(b => b.disabled = false);
                 return;
             }
 
             const card = currentQ.card;
-            const f = new window.tsfsrs.FSRS(); // 從模組中呼叫 FSRS
+            const f = new window.FSRS_Engine(); // 直接啟動引擎
             
             let fCard = {
                 due: new Date(card.nextReview || Date.now()),
@@ -1138,11 +1135,9 @@
             const ratingDict = { 'Again': 1, 'Hard': 2, 'Good': 3, 'Easy': 4 };
             const rating = ratingDict[ratingStr];
 
-            // 計算新數據
             const schedulingCards = f.repeat(fCard, new Date());
             const newFSRSData = schedulingCards[rating].card;
 
-            // 寫回卡片
             card.nextReview = newFSRSData.due.getTime();
             card.stability = newFSRSData.stability;
             card.difficulty = newFSRSData.difficulty;
@@ -1166,7 +1161,6 @@
             btns.forEach(b => b.disabled = false); 
         }
     }
-
     function finishQuiz() {
         if (quizTimerInterval) clearInterval(quizTimerInterval);
         const duration = document.getElementById('quiz-timer').innerText;
