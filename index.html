@@ -272,8 +272,7 @@
         </div>
         
         <div id="add-section" style="display:none; margin-top:20px; border-top: 2px solid var(--primary); padding-top:20px;">
-            <div style="display:grid; grid-template-columns: 2fr 1fr; gap:10px; margin-bottom:15px;">
-                
+            <div style="display:grid; grid-template-columns: 2fr 1fr 1fr; gap:10px; margin-bottom:15px;">
                 <div>
                     <label style="font-size:12px; color:var(--primary); font-weight:bold;">英文單字 *</label>
                     <div style="display:flex; gap:10px;">
@@ -281,7 +280,17 @@
                         <button id="ai-fetch-btn" onclick="fetchWordData()" class="btn btn-primary" style="white-space:nowrap;">✨ AI 抓取</button>
                     </div>
                 </div>
-                <div><label style="font-size:12px; color:var(--text-sub);">音標 (選填)</label><input type="text" id="input-ipa" placeholder="例: [rɪˈmoʊt]"></div>
+                <div>
+                    <label style="font-size:12px; color:var(--text-sub);">音標 (選填)</label>
+                    <input type="text" id="input-ipa" placeholder="例: [rɪˈmoʊt]">
+                </div>
+                <div>
+                    <label style="font-size:12px; color:var(--primary); font-weight:bold;">單字分類 *</label>
+                    <select id="input-category">
+                        <option value="daily">☕ 日常單字</option>
+                        <option value="exam">🏫 學校考試</option>
+                    </select>
+                </div>
             </div>
             <div id="definitions-container"></div>
             <button onclick="addDefinitionInput('definitions-container')" class="btn btn-secondary" style="width:100%; border-style:dashed; margin-top:10px;">+ 新增定義</button>
@@ -515,6 +524,7 @@
     async function saveNewCard() {
         const word = document.getElementById('input-word').value.trim();
         const ipa = document.getElementById('input-ipa').value.trim();
+        const category = document.getElementById('input-category').value; // ✨ 新增這行：抓取分類
         const defGroups = document.querySelectorAll('#definitions-container .def-group');
         let definitions = [];
         
@@ -537,6 +547,7 @@
             word: word,
             ipa: ipa,
             definitions: definitions,
+            category: category,
             dateAdded: new Date().toISOString().split('T')[0],
             level: 0,
             // 新增時維持 Date.now()，確保你可以「立刻」在 Review 列表看到它並開始學習
@@ -772,9 +783,9 @@
 
                 el.innerHTML = `
                     <div class="card-header">
-                        <input type="checkbox" class="word-checkbox" value="${card.id}" onchange="toggleBulkDeleteBtn()" style="transform: scale(1.3); margin-right: 15px; cursor: pointer; accent-color: var(--danger);">
                         
                         <div style="display:flex; align-items:center;">
+                            <input type="checkbox" class="word-checkbox" value="${card.id}" onchange="toggleBulkDeleteBtn()" style="transform: scale(1.3); margin-right: 15px; cursor: pointer; accent-color: var(--danger);">
                             <span class="word-title">${card.word}</span>
                             <span class="word-ipa">${card.ipa || ''}</span>
                         </div>
