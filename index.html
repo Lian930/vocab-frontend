@@ -313,6 +313,12 @@
         <div class="sort-toolbar">
             <button onclick="startQuiz('practice')" class="btn btn-success" style="font-size:13px; justify-content:center;">🎲 隨機刷題</button>
             
+            <select id="filter-category" class="sort-select" onchange="renderCards()">
+                <option value="all">🌍 全部單字</option>
+                <option value="exam">🏫 學校考試</option>
+                <option value="daily">☕ 日常單字</option>
+            </select>
+
             <label style="font-size:13px; color:var(--text-sub); font-weight:600;">排序方式：</label>
             <select id="sort-mode" class="sort-select" onchange="renderCards()">
                 <option value="review-asc">⏳ 複習時間 (由近到遠)</option>
@@ -732,10 +738,25 @@
         const list = document.getElementById('card-list');
         list.innerHTML = '';
         
+        // ✨ 1. 抓取目前的分類篩選條件
+        const filterSelect = document.getElementById('filter-category');
+        const filterCat = filterSelect ? filterSelect.value : 'all';
+        
+        // ✨ 2. 根據條件過濾單字 (如果舊單字沒分類，預設算 daily)
+        let displayCards = cards;
+        if (filterCat !== 'all') {
+            displayCards = cards.filter(c => (c.category || 'daily') === filterCat);
+        }
+        
+        // ✨ 3. 動態更新畫面上的單字總數
+        const countSpan = document.getElementById('total-count');
+        if (countSpan) countSpan.innerText = displayCards.length;
+
         const sortSelect = document.getElementById('sort-mode');
         const sortMode = sortSelect ? sortSelect.value : 'review-asc';
         
-        const sortedCards = [...cards].sort((a, b) => {
+        // 🌟 4. 注意：改用剛剛過濾好的 displayCards 來排序
+        const sortedCards = [...displayCards].sort((a, b) => {
             switch (sortMode) {
                 case 'review-asc': return a.nextReview - b.nextReview;
                 case 'review-desc': return b.nextReview - a.nextReview;
@@ -784,6 +805,15 @@
 
                 // 🌟 安全處理音標，避免語法衝突
                 const ipaHtml = card.ipa ? '<span class="word-ipa" style="white-space: nowrap; flex-shrink:0;">' + card.ipa + '</span>' : '';
+
+                // ✨ 製作分類小徽章 (判斷是考試還是日常)
+                const isExam = ((card.category || 'daily') === 'exam');
+                const catText = isExam ? '🏫 考試' : '☕ 日常';
+                const catBg = isExam ? '#e0e7ff' : '#fef3c7';
+                const catColor = isExam ? '#3730a3' : '#92400e';
+                const catBorder = isExam ? '#a5b4fc' : '#fde68a';
+                const catBadgeHtml = `<span style="font-size:12px; padding:4px 8px; border-radius:6px; font-weight:600; flex-shrink:0; background:${catBg}; color:${catColor}; border:1px solid ${catBorder}; margin-left:10px;">${catText}</span>`;
+
 
                 el.innerHTML = `
                     <div class="card-header">
