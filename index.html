@@ -727,6 +727,7 @@
 
     // --- 渲染卡片 (含排序邏輯) ---
     // --- 渲染卡片 (防彈升級版：避免單一壞資料搞垮整個畫面) ---
+    // --- 渲染卡片 (防彈升級版：避免單一壞資料搞垮整個畫面) ---
     function renderCards() {
         const list = document.getElementById('card-list');
         list.innerHTML = '';
@@ -781,13 +782,15 @@
                     });
                 }
 
+                // 🌟 安全處理音標，避免語法衝突
+                const ipaHtml = card.ipa ? '<span class="word-ipa" style="white-space: nowrap; flex-shrink:0;">' + card.ipa + '</span>' : '';
+
                 el.innerHTML = `
                     <div class="card-header">
                         <div style="display:flex; align-items:center; gap:15px; flex:1; min-width:0;">
                             <input type="checkbox" class="word-checkbox" value="${card.id}" onchange="toggleBulkDeleteBtn()" style="transform: scale(1.3); cursor: pointer; accent-color: var(--danger); margin:0; flex-shrink:0;">
                             <span class="word-title" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${card.word}</span>
-                            
-                            ${card.ipa ? `<span class="word-ipa" style="white-space: nowrap; flex-shrink:0;">${card.ipa}</span>` : ''}
+                            ${ipaHtml}
                         </div>
                         
                         <span class="timer-badge ${isDue ? 'timer-due' : ''}" style="margin-left:auto;">${timeText}</span>
@@ -800,7 +803,7 @@
                             </div>
                         </div>
                     </div>
-                        <div class="card-body">
+                    <div class="card-body">
                         ${defsHtml}
                     </div>
                     <div class="level-bar-container">
@@ -808,7 +811,7 @@
                     </div>
                 `;
                 
-                // 🌟 就是少了這最關鍵的一行！把卡片貼到畫面上！
+                // 🌟 就是這行救命指令！把做好的單字卡貼到畫面上
                 list.appendChild(el);
                 
             } catch (err) {
