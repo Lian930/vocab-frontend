@@ -788,14 +788,14 @@
                 el.innerHTML = `
                     <div class="card-header">
                         <div style="display:flex; align-items:center; gap:15px; flex:1; min-width:0;">
-                            <input type="checkbox" class="word-checkbox" value="${card.id}" onchange="toggleBulkDeleteBtn()" style="width: 20px; height: 20px; padding: 0; box-shadow: none; background: transparent; cursor: pointer; accent-color: var(--danger); margin: 0; flex-shrink: 0;"> cursor: pointer; accent-color: var(--danger); margin:0; flex-shrink:0;">
+                            <input type="checkbox" class="word-checkbox" value="${card.id}" onchange="toggleBulkDeleteBtn()" style="width: 20px; height: 20px; margin: 0; padding: 0; cursor: pointer; accent-color: var(--danger); flex-shrink: 0; box-shadow: none; background: transparent;">
                             <span class="word-title" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${card.word}</span>
                             ${ipaHtml}
                         </div>
                         
-                        <span class="timer-badge ${isDue ? 'timer-due' : ''}" style="margin-left:auto;">${timeText}</span>
+                        <span class="timer-badge ${isDue ? 'timer-due' : ''}" style="margin-left:auto; flex-shrink:0;">${timeText}</span>
                         
-                        <div style="display:flex; align-items:center; gap:10px; margin-left:15px;">
+                        <div style="display:flex; align-items:center; gap:10px; margin-left:15px; flex-shrink:0;">
                             <span class="level-badge" style="color:${levelColor}; border-color:${levelColor}">Lv.${lvl}</span>
                             <div style="display:flex; gap:6px;">
                                 <button class="btn btn-secondary btn-icon" onclick="speak('${card.word}')">🔊</button>
@@ -803,9 +803,11 @@
                             </div>
                         </div>
                     </div>
+                    
                     <div class="card-body">
                         ${defsHtml}
                     </div>
+                    
                     <div class="level-bar-container">
                         <div class="level-bar-fill" style="width:${progressPercent}%; background-color:${levelColor};"></div>
                     </div>
